@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_vibrato.c,v 1.2 2004/02/19 20:30:58 tszilagyi Exp $
+    $Id: tap_vibrato.c,v 1.3 2004/02/21 17:33:36 tszilagyi Exp $
 */
 
 
@@ -169,8 +169,8 @@ run_Vibrato(LADSPA_Handle Instance,
 	LADSPA_Data depth = 
 		LIMIT(LIMIT(*(ptr->depth),0.0f,20.0f) * ptr->sample_rate / 200.0f / M_PI / freq,
 		      0, ptr->buflen / 2);
-	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-90.0f,10.0f));
-	LADSPA_Data wetlevel = db2lin(LIMIT(*(ptr->wetlevel),-90.0f,10.0f));
+	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-90.0f,20.0f));
+	LADSPA_Data wetlevel = db2lin(LIMIT(*(ptr->wetlevel),-90.0f,20.0f));
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
 
@@ -239,8 +239,8 @@ run_adding_Vibrato(LADSPA_Handle Instance,
 	LADSPA_Data depth = 
 		LIMIT(LIMIT(*(ptr->depth),0.0f,20.0f) * ptr->sample_rate / 200.0f / M_PI / freq,
 		      0, ptr->buflen / 2);
-	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-90.0f,10.0f));
-	LADSPA_Data wetlevel = db2lin(LIMIT(*(ptr->wetlevel),-90.0f,10.0f));
+	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-90.0f,20.0f));
+	LADSPA_Data wetlevel = db2lin(LIMIT(*(ptr->wetlevel),-90.0f,20.0f));
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
 
@@ -386,9 +386,9 @@ _init() {
 	port_range_hints[FREQ].LowerBound = 0;
 	port_range_hints[FREQ].UpperBound = PM_FREQ;
 	port_range_hints[DRYLEVEL].LowerBound = -90.0f;
-	port_range_hints[DRYLEVEL].UpperBound = +10.0f;
+	port_range_hints[DRYLEVEL].UpperBound = +20.0f;
 	port_range_hints[WETLEVEL].LowerBound = -90.0f;
-	port_range_hints[WETLEVEL].UpperBound = +10.0f;
+	port_range_hints[WETLEVEL].UpperBound = +20.0f;
 	port_range_hints[LATENCY].LowerBound = 0;
 	port_range_hints[LATENCY].UpperBound = PM_DEPTH;
 	port_range_hints[INPUT].HintDescriptor = 0;

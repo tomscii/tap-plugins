@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_pitch.c,v 1.1 2004/02/19 20:30:58 tszilagyi Exp $
+    $Id: tap_pitch.c,v 1.2 2004/02/21 17:33:36 tszilagyi Exp $
 */
 
 
@@ -438,7 +438,7 @@ _init() {
 
 	mono_descriptor->UniqueID = ID_MONO;
 	mono_descriptor->Label = strdup("tap_pitch");
-	mono_descriptor->Properties = 0;
+	mono_descriptor->Properties = LADSPA_PROPERTY_HARD_RT_CAPABLE;
 	mono_descriptor->Name = strdup("TAP Pitch Shifter");
 	mono_descriptor->Maker = strdup("Tom Szilagyi");
 	mono_descriptor->Copyright = strdup("GPL");
