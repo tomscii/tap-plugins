@@ -3,7 +3,6 @@ TAP-plugins (Tom's Audio Processing plugins)
 
 AUTHOR: Tom Szilagyi <tszilagyi@users.sourceforge.net>
 WEBPAGE: http://tap-plugins.sf.net
-VERSION/DATE: 0.4.0/2004-02-21
 
 
 Welcome!
@@ -41,6 +40,3 @@ welcome at: <tszilagyi@users.sourceforge.net>
 
 
 Have fun, turn up the volume and kick the shit out of your neighbours!
-
-
-$Id: README,v 1.6 2004/02/25 18:34:55 tszilagyi Exp $

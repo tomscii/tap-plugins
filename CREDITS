@@ -2,8 +2,7 @@ The author would like to thank the following people for their help,
 support, comments, suggestions, patches etc.
 
 If you discover yourself in the following list and would like to
-remain nameless instead, please write to the author. You will be
-removed instantly.
+remain nameless instead, please write to the author.
 
 In no particular order:
 
@@ -27,7 +26,7 @@ Nick Lamb <njl98r@ecs.soton.ac.uk> suggested using his Demolition
 sanity-check the TAP-plugins. Demolition proved essential, a must for
 any LADSPA plugin developer. It revealed bugs and LADSPA
 non-conformancies too many to mention in the TAP-plugins code, which
-could be fixed easily this away.
+could be fixed easily this way.
 
 
 

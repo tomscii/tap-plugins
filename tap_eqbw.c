@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
     
-    $Id: tap_eqbw.c,v 1.1 2004/02/25 18:34:55 tszilagyi Exp $
+    $Id: tap_eqbw.c,v 1.2 2004/03/03 14:37:09 tszilagyi Exp $
 */
 
 
