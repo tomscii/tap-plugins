@@ -2,7 +2,7 @@
     Copyright (C) 2004 Tom Szilagyi
     
     Patches were received from:
-        Alex ... <>
+        Alexander Koenig <alex@lisas.de>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_autopan.c,v 1.2 2004/02/07 22:03:37 tszilagyi Exp $
+    $Id: tap_autopan.c,v 1.3 2004/02/07 22:09:30 tszilagyi Exp $
 */
 
 
