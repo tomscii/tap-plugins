@@ -15,17 +15,47 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_dynamics_m.c,v 1.1 2004/05/01 16:15:06 tszilagyi Exp $
+    $Id: tap_dynamics_m.c,v 1.2 2004/06/15 14:50:55 tszilagyi Exp $
 */
 
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <math.h>
 
 #include "ladspa.h"
 #include "tap_utils.h"
+
+
+/* ***** VERY IMPORTANT! *****
+ *
+ * If you enable this, the plugin will use float arithmetics in DSP
+ * calculations.  This usually yields lower average CPU usage, but
+ * occasionaly may result in high CPU peaks which cause trouble to you
+ * and your JACK server.  The default is to use fixpoint arithmetics
+ * (with the following #define commented out).  But (depending on the
+ * processor on which you run the code) you may find floating point
+ * mode usable.
+ */
+/*#define DYN_CALC_FLOAT*/
+
+
+typedef signed int sample;
+
+/* coefficient for float to sample (signed int) conversion */
+#define F2S 2147483
+
+
+#ifdef DYN_CALC_FLOAT
+typedef LADSPA_Data dyn_t;
+typedef float rms_t;
+#else
+typedef sample dyn_t;
+typedef int64_t rms_t;
+#endif
+
 
 
 /* The Unique ID of the plugin: */
@@ -55,9 +85,9 @@
 
 
 typedef struct {
-        float        buffer[RMSSIZE];
+	rms_t        buffer[RMSSIZE];
         unsigned int pos;
-        float        sum;
+        rms_t        sum;
 } rms_env;
 
 
@@ -91,14 +121,14 @@ typedef struct {
 	LADSPA_Data * output;
 	unsigned long sample_rate;
 
-	LADSPA_Data * as;
+	float * as;
 	unsigned long count;
-	LADSPA_Data amp;
-	LADSPA_Data env;
-	LADSPA_Data gain;
-	LADSPA_Data gain_out;
+	dyn_t amp;
+	dyn_t env;
+	float gain;
+	float gain_out;
 	rms_env * rms;
-	LADSPA_Data sum;
+	rms_t sum;
 
 	DYNAMICS_DATA graph;
 
@@ -108,6 +138,7 @@ typedef struct {
 
 
 /* RMS envelope stuff, grabbed without a second thought from Steve Harris's swh-plugins, util/rms.c */
+/* Adapted, though, to be able to use fixed-point arithmetics as well. */
 
 rms_env *
 rms_env_new(void) {
@@ -130,15 +161,19 @@ rms_env_reset(rms_env *r) {
 }
 
 inline static
-float
-rms_env_process(rms_env *r, const float x) {
+dyn_t
+rms_env_process(rms_env *r, const rms_t x) {
 
         r->sum -= r->buffer[r->pos];
         r->sum += x;
         r->buffer[r->pos] = x;
         r->pos = (r->pos + 1) & (RMSSIZE - 1);
 
+#ifdef DYN_CALC_FLOAT
         return sqrt(r->sum / (float)RMSSIZE);
+#else
+        return sqrt(r->sum / RMSSIZE);
+#endif
 }
 
 
@@ -177,14 +212,14 @@ instantiate_Dynamics(const LADSPA_Descriptor * Descriptor, unsigned long sample_
 	
 	LADSPA_Handle * ptr;
 
-	LADSPA_Data * as = NULL;
+	float * as = NULL;
 	unsigned int count = 0;
-	LADSPA_Data amp = 0.0f;
-	LADSPA_Data env = 0.0f;
-	LADSPA_Data gain = 0.0f;
-	LADSPA_Data gain_out = 0.0f;
+        dyn_t amp = 0.0f;
+	dyn_t env = 0.0f;
+	float gain = 0.0f;
+	float gain_out = 0.0f;
 	rms_env * rms = NULL;
-	LADSPA_Data sum = 0.0f;
+	rms_t sum = 0;
 	int i;
 	
 	if ((ptr = malloc(sizeof(Dynamics))) == NULL)
@@ -201,7 +236,7 @@ instantiate_Dynamics(const LADSPA_Descriptor * Descriptor, unsigned long sample_
 
         as[0] = 1.0f;
         for (i = 1; i < TABSIZE; i++) {
-		as[i] = expf(-1.0f / (sample_rate * (LADSPA_Data)i / (LADSPA_Data)TABSIZE));
+		as[i] = expf(-1.0f / (sample_rate * (float)i / (float)TABSIZE));
         }
 
         ((Dynamics *)ptr)->as = as;
@@ -268,51 +303,76 @@ run_Dynamics(LADSPA_Handle Instance,
 	Dynamics * ptr = (Dynamics *)Instance;
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
-        const LADSPA_Data attack = LIMIT(*(ptr->attack), 4.0f, 500.0f);
-        const LADSPA_Data release = LIMIT(*(ptr->release), 4.0f, 1000.0f);
-        const LADSPA_Data offsgain = db2lin(LIMIT(*(ptr->offsgain), -20.0f, 20.0f));
-        const LADSPA_Data mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
+        const float attack = LIMIT(*(ptr->attack), 4.0f, 500.0f);
+        const float release = LIMIT(*(ptr->release), 4.0f, 1000.0f);
+        const float offsgain = LIMIT(*(ptr->offsgain), -20.0f, 20.0f);
+        const float mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
 	const int mode = LIMIT(*(ptr->mode), 0, NUM_MODES-1);
 	unsigned long sample_index;
 
-        LADSPA_Data amp = ptr->amp;
-        LADSPA_Data * as = ptr->as;
+        dyn_t amp = ptr->amp;
+        dyn_t env = ptr->env;
+        float * as = ptr->as;
         unsigned int count = ptr->count;
-        LADSPA_Data env = ptr->env;
-        LADSPA_Data gain = ptr->gain;
-        LADSPA_Data gain_out = ptr->gain_out;
+        float gain = ptr->gain;
+        float gain_out = ptr->gain_out;
         rms_env * rms = ptr->rms;
-        LADSPA_Data sum = ptr->sum;
+        rms_t sum = ptr->sum;
 
-        const LADSPA_Data ga = as[(unsigned int)(attack * 0.001f * (LADSPA_Data)(TABSIZE-1))];
-        const LADSPA_Data gr = as[(unsigned int)(release * 0.001f * (LADSPA_Data)(TABSIZE-1))];
-        const LADSPA_Data ef_a = ga * 0.25f;
-        const LADSPA_Data ef_ai = 1.0f - ef_a;
+        const float ga = as[(unsigned int)(attack * 0.001f * (float)(TABSIZE-1))];
+        const float gr = as[(unsigned int)(release * 0.001f * (float)(TABSIZE-1))];
+        const float ef_a = ga * 0.25f;
+        const float ef_ai = 1.0f - ef_a;
 
-	LADSPA_Data level = 0.0f;
-	LADSPA_Data adjust = 0.0f;
+	float level = 0.0f;
+	float adjust = 0.0f;
 
         for (sample_index = 0; sample_index < sample_count; sample_index++) {
-		sum += offsgain * offsgain * input[sample_index] * input[sample_index];
 
+#ifdef DYN_CALC_FLOAT
+		sum += input[sample_index] * input[sample_index];
 		if (amp > env) {
 			env = env * ga + amp * (1.0f - ga);
 		} else {
 			env = env * gr + amp * (1.0f - gr);
 		}
+#else
+		sum += (rms_t)(input[sample_index] * F2S * input[sample_index] * F2S);
+		if (amp) {
+			if (amp > env) {
+				env = (double)env * ga + (double)amp * (1.0f - ga);
+			} else {
+				env = (double)env * gr + (double)amp * (1.0f - gr);
+			}
+		} else
+			env = 0;
+#endif
 
 		if (count++ % 4 == 3) {
-			amp = rms_env_process(rms, sum * 0.25f);
+#ifdef DYN_CALC_FLOAT
+			amp = rms_env_process(rms, sum / 4);
+#else
+			if (sum)
+				amp = rms_env_process(rms, sum / 4);
+			else
+				amp = 0;
+#endif
+
+#ifdef DYN_CALC_FLOAT
 			if (isnan(amp))
 				amp = 0.0f;
-
-			sum = 0.0f;
+#endif
+			sum = 0;
 
 			/* set gain_out according to the difference between
 			   the envelope volume level (env) and the corresponding
 			   output level (from graph) */
+#ifdef DYN_CALC_FLOAT
 			level = 20 * log10f(2 * env);
-			adjust = get_table_gain(mode, level);
+#else
+			level = 20 * log10f(2 * (double)env / (double)F2S);
+#endif
+			adjust = get_table_gain(mode, level + offsgain);
 			gain_out = db2lin(adjust);
 
 		}
@@ -349,51 +409,76 @@ run_adding_Dynamics(LADSPA_Handle Instance,
 	Dynamics * ptr = (Dynamics *)Instance;
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
-        const LADSPA_Data attack = LIMIT(*(ptr->attack), 4.0f, 500.0f);
-        const LADSPA_Data release = LIMIT(*(ptr->release), 4.0f, 1000.0f);
-        const LADSPA_Data offsgain = db2lin(LIMIT(*(ptr->offsgain), -20.0f, 20.0f));
-        const LADSPA_Data mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
+        const float attack = LIMIT(*(ptr->attack), 4.0f, 500.0f);
+        const float release = LIMIT(*(ptr->release), 4.0f, 1000.0f);
+        const float offsgain = LIMIT(*(ptr->offsgain), -20.0f, 20.0f);
+        const float mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
 	const int mode = LIMIT(*(ptr->mode), 0, NUM_MODES-1);
 	unsigned long sample_index;
 
-        LADSPA_Data amp = ptr->amp;
-        LADSPA_Data * as = ptr->as;
+        dyn_t amp = ptr->amp;
+        dyn_t env = ptr->env;
+        float * as = ptr->as;
         unsigned int count = ptr->count;
-        LADSPA_Data env = ptr->env;
-        LADSPA_Data gain = ptr->gain;
-        LADSPA_Data gain_out = ptr->gain_out;
+        float gain = ptr->gain;
+        float gain_out = ptr->gain_out;
         rms_env * rms = ptr->rms;
-        LADSPA_Data sum = ptr->sum;
+        rms_t sum = ptr->sum;
 
-        const LADSPA_Data ga = as[(unsigned int)(attack * 0.001f * (LADSPA_Data)(TABSIZE-1))];
-        const LADSPA_Data gr = as[(unsigned int)(release * 0.001f * (LADSPA_Data)(TABSIZE-1))];
-        const LADSPA_Data ef_a = ga * 0.25f;
-        const LADSPA_Data ef_ai = 1.0f - ef_a;
+        const float ga = as[(unsigned int)(attack * 0.001f * (float)(TABSIZE-1))];
+        const float gr = as[(unsigned int)(release * 0.001f * (float)(TABSIZE-1))];
+        const float ef_a = ga * 0.25f;
+        const float ef_ai = 1.0f - ef_a;
 
-	LADSPA_Data level = 0.0f;
-	LADSPA_Data adjust = 0.0f;
+	float level = 0.0f;
+	float adjust = 0.0f;
 
         for (sample_index = 0; sample_index < sample_count; sample_index++) {
-		sum += offsgain * offsgain * input[sample_index] * input[sample_index];
 
+#ifdef DYN_CALC_FLOAT
+		sum += input[sample_index] * input[sample_index];
 		if (amp > env) {
 			env = env * ga + amp * (1.0f - ga);
 		} else {
 			env = env * gr + amp * (1.0f - gr);
 		}
+#else
+		sum += (rms_t)(input[sample_index] * F2S * input[sample_index] * F2S);
+		if (amp) {
+			if (amp > env) {
+				env = (double)env * ga + (double)amp * (1.0f - ga);
+			} else {
+				env = (double)env * gr + (double)amp * (1.0f - gr);
+			}
+		} else
+			env = 0;
+#endif
 
 		if (count++ % 4 == 3) {
-			amp = rms_env_process(rms, sum * 0.25f);
+#ifdef DYN_CALC_FLOAT
+			amp = rms_env_process(rms, sum / 4);
+#else
+			if (sum)
+				amp = rms_env_process(rms, sum / 4);
+			else
+				amp = 0;
+#endif
+
+#ifdef DYN_CALC_FLOAT
 			if (isnan(amp))
 				amp = 0.0f;
-
-			sum = 0.0f;
+#endif
+			sum = 0;
 
 			/* set gain_out according to the difference between
 			   the envelope volume level (env) and the corresponding
 			   output level (from graph) */
+#ifdef DYN_CALC_FLOAT
 			level = 20 * log10f(2 * env);
-			adjust = get_table_gain(mode, level);
+#else
+			level = 20 * log10f(2 * (double)env / (double)F2S);
+#endif
+			adjust = get_table_gain(mode, level + offsgain);
 			gain_out = db2lin(adjust);
 
 		}

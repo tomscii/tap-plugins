@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.12 2004/06/14 16:43:55 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.13 2004/06/15 14:50:55 tszilagyi Exp $
 */
 
 
@@ -624,8 +624,8 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 #else
 		out_L = (sample)((float)in_L * drylevel + (float)combs_out_L * wetlevel);
 		out_R = (sample)((float)in_R * drylevel + (float)combs_out_R * wetlevel);
-		*(output_L++) = (float)out_L * ptr->run_adding_gain / (float)F2S;
-		*(output_R++) = (float)out_R * ptr->run_adding_gain / (float)F2S;
+		*(output_L++) += (float)out_L * ptr->run_adding_gain / (float)F2S;
+		*(output_R++) += (float)out_R * ptr->run_adding_gain / (float)F2S;
 #endif
 	}
 }
