@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.11 2004/06/12 18:33:32 tszilagyi Exp $
+#   $Id: Makefile,v 1.12 2004/06/18 20:12:40 tszilagyi Exp $
 
 
 #####################################################################
@@ -45,12 +45,14 @@ PLUGINS		=	tap_autopan.so \
 			tap_eq.so \
 			tap_eqbw.so \
 			tap_pitch.so \
+			tap_reflector.so \
 			tap_reverb.so \
 			tap_rotspeak.so \
 			tap_limiter.so \
 			tap_echo.so \
 			tap_tremolo.so \
 			tap_vibrato.so
+
 
 all: $(PLUGINS)
 
@@ -107,6 +109,10 @@ tap_dynamics_m.so: tap_dynamics_m.c tap_dynamics_presets.h tap_utils.h ladspa.h
 tap_dynamics_st.so: tap_dynamics_st.c tap_dynamics_presets.h tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_dynamics_st.c -o tap_dynamics_st.o
 	$(CC) $(LDFLAGS) -o tap_dynamics_st.so tap_dynamics_st.o
+
+tap_reflector.so: tap_reflector.c tap_utils.h ladspa.h
+	$(CC) $(CFLAGS) tap_reflector.c -o tap_reflector.o
+	$(CC) $(LDFLAGS) -o tap_reflector.so tap_reflector.o
 
 
 # OTHER TARGETS
