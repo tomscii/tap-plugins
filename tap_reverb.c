@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.6 2004/03/03 12:42:55 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.7 2004/03/28 19:47:56 tszilagyi Exp $
 */
 
 
@@ -591,28 +591,7 @@ _init() {
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
 	LADSPA_PortRangeHint * port_range_hints;
-	char string[2048]; /* currently used: 1025 out of 2048 */
 
-#ifdef _SHOW_PRESET_NAMES_IN_GUI_
-	int i;
-	char snum[128];
-
-	strcpy(string,"Presets\n");
-	for (i = 0; i < NUM_MODES; i++) {
-		if (i % 2 == 0) {
-			strcat(string, "\n");
-			strcat(string, reverb_data[i].name);
-			sprintf(snum," :%i  ", i);
-			strcat(string, snum);
-		} else {
-			sprintf(snum," %i: ", i);
-			strcat(string, snum);
-			strcat(string, reverb_data[i].name);
-		}
-	}
-#else
-	strcpy(string,"Preset");
-#endif
 	
 	if ((stereo_descriptor =
 	     (LADSPA_Descriptor *)malloc(sizeof(LADSPA_Descriptor))) == NULL)
@@ -661,7 +640,7 @@ _init() {
 	port_names[ALLPS_EN] = strdup("Allpass Filters");
 	port_names[BANDPASS_EN] = strdup("Bandpass Filter");
 	port_names[STEREO_ENH] = strdup("Enhanced Stereo");
-	port_names[MODE] = strdup(string);
+	port_names[MODE] = strdup("Type");
 	port_names[INPUT_L] = strdup("Input Left");
 	port_names[OUTPUT_L] = strdup("Output Left");
 	port_names[INPUT_R] = strdup("Input Right");

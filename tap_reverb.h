@@ -15,19 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.h,v 1.5 2004/02/21 17:33:36 tszilagyi Exp $
+    $Id: tap_reverb.h,v 1.6 2004/03/28 19:47:56 tszilagyi Exp $
 */
-
-
-
-/*
-  If you use the TAP Reverberator with a host other than Ardour, it
-  may happen that the GUI looks like crap because of the long string
-  which contains all preset names. Even if you use this plugin in
-  Ardour, you may prefer not having the preset names listed.  
-  In any of these cases, all you have to do is comment this out:
-*/
-#define _SHOW_PRESET_NAMES_IN_GUI_
 
 
 
