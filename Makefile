@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.1 2004/01/31 20:54:17 tszilagyi Exp $
+#   $Id: Makefile,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
 
 
 #####################################################################
@@ -40,7 +40,9 @@ PLUGINS		=	tap_tremolo.so \
 			tap_eq.so \
 			tap_echo.so \
 			tap_limiter.so \
-			tap_reverb.so
+			tap_reverb.so \
+			tap_autopan.so \
+			tap_deesser.so
 
 all: $(PLUGINS)
 
@@ -66,13 +68,21 @@ tap_limiter.so: tap_limiter.c tap_utils.h ladspa.h
 	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_limiter.c -o tap_limiter.o
 	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_limiter.so tap_limiter.o
 
+tap_autopan.so: tap_autopan.c tap_utils.h ladspa.h
+	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_autopan.c -o tap_autopan.o
+	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_autopan.so tap_autopan.o
+
+tap_deesser.so: tap_deesser.c tap_utils.h ladspa.h
+	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_deesser.c -o tap_deesser.o
+	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_deesser.so tap_deesser.o
+
 
 # OTHER TARGETS
 
 install: targets
-	-mkdirhier	$(INSTALL_PLUGINS_DIR)
+	mkdir -p	$(INSTALL_PLUGINS_DIR)
 	cp *.so 	$(INSTALL_PLUGINS_DIR)
-	-mkdirhier	$(INSTALL_LRDF_DIR)
+	mkdir -p	$(INSTALL_LRDF_DIR)
 	cp tap-plugins.rdf $(INSTALL_LRDF_DIR)
 
 targets:	$(PLUGINS)

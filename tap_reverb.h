@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.h,v 1.1 2004/01/31 20:54:09 tszilagyi Exp $
+    $Id: tap_reverb.h,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
 */
 
 

@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_limiter.c,v 1.1 2004/01/31 20:53:48 tszilagyi Exp $
+    $Id: tap_limiter.c,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
 */
 
 
@@ -46,8 +46,8 @@
 
 /* Size of a ringbuffer that must be large enough to hold audio
  * between two zero-crosses in any case (or you'll hear
- * distortion). 80 Hz sound at 192kHz yields a period of 2400 samples,
- * so this should be enough.
+ * distortion). 40 Hz sound at 192kHz yields a half-period of 2400
+ * samples, so this should be enough.
  */
 #define RINGBUF_SIZE 2500
 
@@ -134,45 +134,36 @@ instantiate_Limiter(const LADSPA_Descriptor * Descriptor,
 	
 	if ((ptr = malloc(sizeof(Limiter))) != NULL) {
 		((Limiter *)ptr)->sample_rate = sample_rate;
-		((Limiter *)ptr)->run_adding_gain = 1.0;
+		((Limiter *)ptr)->run_adding_gain = 1.0f;
+
+		if ((((Limiter *)ptr)->ringbuffer = 
+		     calloc(RINGBUF_SIZE, sizeof(LADSPA_Data))) == NULL)
+			return NULL;
+
+		/* 80 Hz is the lowest frequency with which zero-crosses were
+		 * observed to occur (this corresponds to 40 Hz signal frequency).
+		 */
+		((Limiter *)ptr)->buflen = ((Limiter *)ptr)->sample_rate / 80;
+
+		((Limiter *)ptr)->pos = 0;
+		((Limiter *)ptr)->ready_num = 0;
+
 		return ptr;
 	}
        	return NULL;
 }
 
+
 void
 activate_Limiter(LADSPA_Handle Instance) {
 
 	Limiter * ptr = (Limiter *)Instance;
+	unsigned long i;
 
-	if ((ptr->ringbuffer = calloc(RINGBUF_SIZE, sizeof(LADSPA_Data))) == NULL)
-		exit(1);
-	
-        /* 80 Hz is the lowest frequency with which zero-crosses were
-	 * observed to occur (this corresponds to 40 Hz sound frequency).
-	 */
-	ptr->buflen = ptr->sample_rate / 80; 
-
-	ptr->pos = 0;
-	ptr->ready_num = 0;
+	for (i = 0; i < RINGBUF_SIZE; i++)
+		ptr->ringbuffer[i] = 0.0f;
 }
 
-
-
-/* When this is used (should be), Ardour always segfaults when this
-   plugin is _removed_ for the _second_ time.  Quite interesting, but
-   I don't understand what's wrong with this code.  Even the presence
-   of an empty deactivate function causes a segfault.  If you know
-   why, please write to Tom Szilagyi <st444@hszk.bme.hu> immediately.
-*/
-/*
-void
-deactivate_Limiter(LADSPA_Handle Instance) {
-
-	Limiter * ptr = (Limiter *)Instance;
-	free(ptr->ringbuffer);
-}
-*/
 
 
 
@@ -194,6 +185,7 @@ connect_port_Limiter(LADSPA_Handle Instance,
 		break;
 	case LATENCY:
 		ptr->latency = DataLocation;
+		*(ptr->latency) = ptr->buflen;  /* IS THIS LEGAL? */
 		break;
 	case INPUT:
 		ptr->input = DataLocation;
@@ -285,9 +277,7 @@ run_Limiter(LADSPA_Handle Instance,
 void
 set_run_adding_gain_Limiter(LADSPA_Handle Instance, LADSPA_Data gain) {
 
-	Limiter * ptr;
-
-	ptr = (Limiter *)Instance;
+	Limiter * ptr = (Limiter *)Instance;
 
 	ptr->run_adding_gain = gain;
 }
@@ -375,6 +365,8 @@ run_adding_Limiter(LADSPA_Handle Instance,
 void 
 cleanup_Limiter(LADSPA_Handle Instance) {
 
+	Limiter * ptr = (Limiter *)Instance;
+	free(ptr->ringbuffer);
 	free(Instance);
 }
 
@@ -460,7 +452,7 @@ _init() {
 	mono_descriptor->run = run_Limiter;
 	mono_descriptor->run_adding = run_adding_Limiter;
 	mono_descriptor->set_run_adding_gain = set_run_adding_gain_Limiter;
-	mono_descriptor->deactivate = NULL; /*deactivate_Limiter;*/
+	mono_descriptor->deactivate = NULL;
 	mono_descriptor->cleanup = cleanup_Limiter;
 }
 

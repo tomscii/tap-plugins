@@ -489,4 +489,108 @@
     </ladspa:hasSetting>
   </ladspa:LimiterPlugin>
 
+  <ladspa:ModulatorPlugin rdf:about="&ladspa;2146">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP AutoPanner</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2146.1" ladspa:hasLabel="frequency" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2146.2" ladspa:hasLabel="depth" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2146.3" ladspa:hasLabel="gain" />
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2146.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2146.2" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2146.3" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:ModulatorPlugin>
+
+  <ladspa:DynamicsPlugin rdf:about="&ladspa;2147">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP DeEsser</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2147.1" ladspa:hasLabel="threshold" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2147.2" ladspa:hasLabel="frequency" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2147.3" ladspa:hasLabel="sidechain">
+        <ladspa:hasScale>
+          <ladspa:Scale>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="0" ladspa:hasLabel="Highpass" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="1" ladspa:hasLabel="Bandpass" />
+            </ladspa:hasPoint>
+          </ladspa:Scale>
+        </ladspa:hasScale>
+      </ladspa:InputControlPort>
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2147.4" ladspa:hasLabel="monitor">
+        <ladspa:hasScale>
+          <ladspa:Scale>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="0" ladspa:hasLabel="Audio" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="1" ladspa:hasLabel="Sidechain" />
+            </ladspa:hasPoint>
+          </ladspa:Scale>
+        </ladspa:hasScale>
+      </ladspa:InputControlPort>
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2147.5" ladspa:hasLabel="attenuation" />
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2147.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="5500">
+            <ladspa:forPort rdf:resource="&ladspa;2147.2" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2147.3" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2147.4" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2147.5" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:DynamicsPlugin>
+
 </rdf:RDF>

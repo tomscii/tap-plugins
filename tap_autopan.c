@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_tremolo.c,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
+    $Id: tap_autopan.c,v 1.1 2004/02/04 15:35:49 tszilagyi Exp $
 */
 
 
@@ -29,51 +29,56 @@
 
 /* The Unique ID of the plugin: */
 
-#define ID_MONO         2144
+#define ID_STEREO         2146
 
 /* The port numbers for the plugin: */
 
 #define CONTROL_FREQ    0
 #define CONTROL_DEPTH   1
 #define CONTROL_GAIN    2
-#define INPUT_0         3
-#define OUTPUT_0        4
+#define INPUT_L         3
+#define INPUT_R         4
+#define OUTPUT_L        5
+#define OUTPUT_R        6
 
 
 /* Total number of ports */
 
-#define PORTCOUNT_MONO   5
-
-
-/* cosine table for fast computations */
-LADSPA_Data cos_table[1024];
+#define PORTCOUNT_STEREO   7
 
 
 /* The structure used to hold port connection information and state */
 
 typedef struct {
-	LADSPA_Data * Control_Freq;
-	LADSPA_Data * Control_Depth;
-	LADSPA_Data * Control_Gain;
-	LADSPA_Data * InputBuffer_1;
-	LADSPA_Data * OutputBuffer_1;
+	LADSPA_Data * freq;
+	LADSPA_Data * depth;
+	LADSPA_Data * gain;
+	LADSPA_Data * input_L;
+	LADSPA_Data * input_R;
+	LADSPA_Data * output_L;
+	LADSPA_Data * output_R;
 	unsigned long SampleRate;
-	unsigned int Phase;
+	unsigned long Phase;
+	LADSPA_Data cos_table[1024];
 	LADSPA_Data run_adding_gain;
-} Tremolo;
+} AutoPan;
 
 
 
 /* Construct a new plugin instance. */
 LADSPA_Handle 
-instantiate_Tremolo(const LADSPA_Descriptor * Descriptor,
+instantiate_AutoPan(const LADSPA_Descriptor * Descriptor,
 		    unsigned long             SampleRate) {
 	
 	LADSPA_Handle * ptr;
+	int i;
 	
-	if ((ptr = malloc(sizeof(Tremolo))) != NULL) {
-		((Tremolo *)ptr)->SampleRate = SampleRate;
-		((Tremolo *)ptr)->run_adding_gain = 1.0;
+	if ((ptr = malloc(sizeof(AutoPan))) != NULL) {
+		((AutoPan *)ptr)->SampleRate = SampleRate;
+		((AutoPan *)ptr)->run_adding_gain = 1.0;
+		for (i = 0; i < 1024; i++)
+			((AutoPan *)ptr)->cos_table[i] =
+				cosf(i * M_PI / 512.0f);
 		return ptr;
 	}
 	
@@ -81,11 +86,11 @@ instantiate_Tremolo(const LADSPA_Descriptor * Descriptor,
 }
 
 void
-activate_Tremolo(LADSPA_Handle Instance) {
+activate_AutoPan(LADSPA_Handle Instance) {
 
-	Tremolo * ptr;
+	AutoPan * ptr;
 
-	ptr = (Tremolo *)Instance;
+	ptr = (AutoPan *)Instance;
 	ptr->Phase = 0.0f;
 }
 
@@ -93,28 +98,34 @@ activate_Tremolo(LADSPA_Handle Instance) {
 
 /* Connect a port to a data location. */
 void 
-connect_port_Tremolo(LADSPA_Handle Instance,
+connect_port_AutoPan(LADSPA_Handle Instance,
 		     unsigned long Port,
 		     LADSPA_Data * DataLocation) {
 	
-	Tremolo * ptr;
+	AutoPan * ptr;
 	
-	ptr = (Tremolo *)Instance;
+	ptr = (AutoPan *)Instance;
 	switch (Port) {
 	case CONTROL_FREQ:
-		ptr->Control_Freq = DataLocation;
+		ptr->freq = DataLocation;
 		break;
 	case CONTROL_DEPTH:
-		ptr->Control_Depth = DataLocation;
+		ptr->depth = DataLocation;
 		break;
 	case CONTROL_GAIN:
-		ptr->Control_Gain = DataLocation;
+		ptr->gain = DataLocation;
 		break;
-	case INPUT_0:
-		ptr->InputBuffer_1 = DataLocation;
+	case INPUT_L:
+		ptr->input_L = DataLocation;
 		break;
-	case OUTPUT_0:
-		ptr->OutputBuffer_1 = DataLocation;
+	case INPUT_R:
+		ptr->input_R = DataLocation;
+		break;
+	case OUTPUT_L:
+		ptr->output_L = DataLocation;
+		break;
+	case OUTPUT_R:
+		ptr->output_R = DataLocation;
 		break;
 	}
 }
@@ -122,46 +133,43 @@ connect_port_Tremolo(LADSPA_Handle Instance,
 
 
 void 
-run_Tremolo(LADSPA_Handle Instance,
+run_AutoPan(LADSPA_Handle Instance,
 	    unsigned long SampleCount) {
   
-	LADSPA_Data * input;
-	LADSPA_Data * output;
-	LADSPA_Data freq;
-	LADSPA_Data depth;
-	LADSPA_Data gain;
-	Tremolo * ptr;
+	AutoPan * ptr = (AutoPan *)Instance;
+
+	LADSPA_Data * input_L = ptr->input_L;
+	LADSPA_Data * input_R = ptr->input_R;
+	LADSPA_Data * output_L = ptr->output_L;
+	LADSPA_Data * output_R = ptr->output_R;
+	LADSPA_Data freq = *(ptr->freq);
+	LADSPA_Data depth = *(ptr->depth);
+	LADSPA_Data gain = db2lin(*(ptr->gain));
 	unsigned long sample_index;
-	unsigned int phase = 0;
+	unsigned long phase_L = 0;
+	unsigned long phase_R = 0;
 	
-	ptr = (Tremolo *)Instance;
-	
-	input = ptr->InputBuffer_1;
-	output = ptr->OutputBuffer_1;
-	freq = *(ptr->Control_Freq);
-	depth = *(ptr->Control_Depth);
-	gain = db2lin(*(ptr->Control_Gain));
+	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
+		phase_L = 1024 * freq * sample_index / ptr->SampleRate + ptr->Phase;
+		phase_L %= 1024;
+		phase_R = (phase_L + 512) % 1024;
 
-  	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		phase = 1024 * freq * sample_index / ptr->SampleRate + ptr->Phase;
-
-		while (phase >= 1024)
-			phase -= 1024;
-
-		*(output++) = *(input++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[phase]);
+		*(output_L++) = *(input_L++) * gain *
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_L]);
+		*(output_R++) = *(input_R++) * gain *
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_R]);
 	}
-	ptr->Phase = phase;
+	ptr->Phase = phase_L;
 }
 
 
 
 void
-set_run_adding_gain_Tremolo(LADSPA_Handle Instance, LADSPA_Data gain) {
+set_run_adding_gain_AutoPan(LADSPA_Handle Instance, LADSPA_Data gain) {
 
-	Tremolo * ptr;
+	AutoPan * ptr;
 
-	ptr = (Tremolo *)Instance;
+	ptr = (AutoPan *)Instance;
 
 	ptr->run_adding_gain = gain;
 }
@@ -169,44 +177,41 @@ set_run_adding_gain_Tremolo(LADSPA_Handle Instance, LADSPA_Data gain) {
 
 
 void 
-run_adding_Tremolo(LADSPA_Handle Instance,
+run_adding_AutoPan(LADSPA_Handle Instance,
 		   unsigned long SampleCount) {
   
-	LADSPA_Data * input;
-	LADSPA_Data * output;
-	LADSPA_Data freq;
-	LADSPA_Data depth;
-	LADSPA_Data gain;
-	Tremolo * ptr;
+	AutoPan * ptr = (AutoPan *)Instance;
+
+	LADSPA_Data * input_L = ptr->input_L;
+	LADSPA_Data * input_R = ptr->input_R;
+	LADSPA_Data * output_L = ptr->output_L;
+	LADSPA_Data * output_R = ptr->output_R;
+	LADSPA_Data freq = *(ptr->freq);
+	LADSPA_Data depth = *(ptr->depth);
+	LADSPA_Data gain = db2lin(*(ptr->gain));
 	unsigned long sample_index;
-	unsigned int phase = 0;
+	unsigned long phase_L = 0;
+	unsigned long phase_R = 0;
 	
-	ptr = (Tremolo *)Instance;
-	
-	input = ptr->InputBuffer_1;
-	output = ptr->OutputBuffer_1;
-	freq = *(ptr->Control_Freq);
-	depth = *(ptr->Control_Depth);
-	gain = db2lin(*(ptr->Control_Gain));
+	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
+		phase_L = 1024 * freq * sample_index / ptr->SampleRate + ptr->Phase;
+		phase_L %= 1024;
+		phase_R = (phase_L + 512) % 1024;
 
-  	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		phase = 1024 * freq * sample_index / ptr->SampleRate + ptr->Phase;
-
-		while (phase >= 1024)
-			phase -= 1024;
-
-		*(output++) += *(input++) * ptr->run_adding_gain * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[phase]);
+		*(output_L++) += *(input_L++) * gain * ptr->run_adding_gain *
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_L]);
+		*(output_R++) += *(input_R++) * gain * ptr->run_adding_gain *
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_R]);
 	}
-	ptr->Phase = phase;
+	ptr->Phase = phase_L;
 }
 
 
 
 
-/* Throw away a Tremolo effect instance. */
+/* Throw away a AutoPan effect instance. */
 void 
-cleanup_Tremolo(LADSPA_Handle Instance) {
+cleanup_AutoPan(LADSPA_Handle Instance) {
 	free(Instance);
 }
 
@@ -224,49 +229,49 @@ _init() {
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
 	LADSPA_PortRangeHint * port_range_hints;
-	int i;
 	
 	if ((mono_descriptor = 
 	     (LADSPA_Descriptor *)malloc(sizeof(LADSPA_Descriptor))) == NULL)
 		exit(1);
 	
 
-	for (i = 0; i < 1024; i++)
-		cos_table[i] = cosf(i * M_PI / 512.0f);
 
-
-	mono_descriptor->UniqueID = ID_MONO;
-	mono_descriptor->Label = strdup("tap_tremolo");
+	mono_descriptor->UniqueID = ID_STEREO;
+	mono_descriptor->Label = strdup("tap_autopan");
 	mono_descriptor->Properties = LADSPA_PROPERTY_HARD_RT_CAPABLE;
-	mono_descriptor->Name = strdup("TAP Tremolo");
+	mono_descriptor->Name = strdup("TAP AutoPanner");
 	mono_descriptor->Maker = strdup("Tom Szilagyi");
 	mono_descriptor->Copyright = strdup("GPL");
-	mono_descriptor->PortCount = PORTCOUNT_MONO;
+	mono_descriptor->PortCount = PORTCOUNT_STEREO;
 
 	if ((port_descriptors =
-	     (LADSPA_PortDescriptor *)calloc(PORTCOUNT_MONO, sizeof(LADSPA_PortDescriptor))) == NULL)
+	     (LADSPA_PortDescriptor *)calloc(PORTCOUNT_STEREO, sizeof(LADSPA_PortDescriptor))) == NULL)
 		exit(1);
 
 	mono_descriptor->PortDescriptors = (const LADSPA_PortDescriptor *)port_descriptors;
 	port_descriptors[CONTROL_FREQ] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 	port_descriptors[CONTROL_DEPTH] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 	port_descriptors[CONTROL_GAIN] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
-	port_descriptors[INPUT_0] = LADSPA_PORT_INPUT | LADSPA_PORT_AUDIO;
-	port_descriptors[OUTPUT_0] = LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO;
+	port_descriptors[INPUT_L] = LADSPA_PORT_INPUT | LADSPA_PORT_AUDIO;
+	port_descriptors[INPUT_R] = LADSPA_PORT_INPUT | LADSPA_PORT_AUDIO;
+	port_descriptors[OUTPUT_L] = LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO;
+	port_descriptors[OUTPUT_R] = LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO;
 
 	if ((port_names = 
-	     (char **)calloc(PORTCOUNT_MONO, sizeof(char *))) == NULL)
+	     (char **)calloc(PORTCOUNT_STEREO, sizeof(char *))) == NULL)
 		exit(1);
 
 	mono_descriptor->PortNames = (const char **)port_names;
 	port_names[CONTROL_FREQ] = strdup("Frequency [Hz]");
 	port_names[CONTROL_DEPTH] = strdup("Depth [%]");
 	port_names[CONTROL_GAIN] = strdup("Gain [dB]");
-	port_names[INPUT_0] = strdup("Input_0");
-	port_names[OUTPUT_0] = strdup("Output_0");
+	port_names[INPUT_L] = strdup("Input L");
+	port_names[INPUT_R] = strdup("Input R");
+	port_names[OUTPUT_L] = strdup("Output L");
+	port_names[OUTPUT_R] = strdup("Output R");
 
 	if ((port_range_hints = 
-	     ((LADSPA_PortRangeHint *)calloc(PORTCOUNT_MONO, sizeof(LADSPA_PortRangeHint)))) == NULL)
+	     ((LADSPA_PortRangeHint *)calloc(PORTCOUNT_STEREO, sizeof(LADSPA_PortRangeHint)))) == NULL)
 		exit(1);
 
 	mono_descriptor->PortRangeHints	= (const LADSPA_PortRangeHint *)port_range_hints;
@@ -288,16 +293,18 @@ _init() {
 	port_range_hints[CONTROL_DEPTH].UpperBound = 100;
 	port_range_hints[CONTROL_GAIN].LowerBound = -70;
 	port_range_hints[CONTROL_GAIN].UpperBound = 20;
-	port_range_hints[INPUT_0].HintDescriptor = 0;
-	port_range_hints[OUTPUT_0].HintDescriptor = 0;
-	mono_descriptor->instantiate = instantiate_Tremolo;
-	mono_descriptor->connect_port = connect_port_Tremolo;
-	mono_descriptor->activate = activate_Tremolo;
-	mono_descriptor->run = run_Tremolo;
-	mono_descriptor->run_adding = run_adding_Tremolo;
-	mono_descriptor->set_run_adding_gain = set_run_adding_gain_Tremolo;
+	port_range_hints[INPUT_L].HintDescriptor = 0;
+	port_range_hints[INPUT_R].HintDescriptor = 0;
+	port_range_hints[OUTPUT_L].HintDescriptor = 0;
+	port_range_hints[OUTPUT_R].HintDescriptor = 0;
+	mono_descriptor->instantiate = instantiate_AutoPan;
+	mono_descriptor->connect_port = connect_port_AutoPan;
+	mono_descriptor->activate = activate_AutoPan;
+	mono_descriptor->run = run_AutoPan;
+	mono_descriptor->run_adding = run_adding_AutoPan;
+	mono_descriptor->set_run_adding_gain = set_run_adding_gain_AutoPan;
 	mono_descriptor->deactivate = NULL;
-	mono_descriptor->cleanup = cleanup_Tremolo;
+	mono_descriptor->cleanup = cleanup_AutoPan;
 }
 
 
