@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
     
-    $Id: tap_eq.c,v 1.5 2004/02/21 17:33:36 tszilagyi Exp $
+    $Id: tap_eq.c,v 1.6 2004/04/18 19:56:56 tszilagyi Exp $
 */
 
 
@@ -127,30 +127,19 @@ static
 void
 activate_eq(LADSPA_Handle instance) {
 
-	eq *ptr = (eq *)instance;
-	biquad *filters = ptr->filters;
-	float fs = ptr->fs;
+        eq *ptr = (eq *)instance;
+        biquad *filters = ptr->filters;
 
 	biquad_init(&filters[0]);
-	eq_set_params(&filters[0], 100.0f, 0.0f, BWIDTH, fs);
 	biquad_init(&filters[1]);
-	eq_set_params(&filters[1], 200.0f, 0.0f, BWIDTH, fs);
 	biquad_init(&filters[2]);
-	eq_set_params(&filters[2], 400.0f, 0.0f, BWIDTH, fs);
 	biquad_init(&filters[3]);
-	eq_set_params(&filters[3], 1000.0f, 0.0f, BWIDTH, fs);
 	biquad_init(&filters[4]);
-	eq_set_params(&filters[4], 3000.0f, 0.0f, BWIDTH, fs);
 	biquad_init(&filters[5]);
-	eq_set_params(&filters[5], 6000.0f, 0.0f, BWIDTH, fs);
 	biquad_init(&filters[6]);
-	eq_set_params(&filters[6], 12000.0f, 0.0f, BWIDTH, fs);
 	biquad_init(&filters[7]);
-	eq_set_params(&filters[7], 15000.0f, 0.0f, BWIDTH, fs);
-
-	ptr->filters = filters;
-	ptr->fs = fs;
 }
+
 
 
 static
@@ -241,6 +230,15 @@ instantiate_eq(const LADSPA_Descriptor *descriptor, unsigned long s_rate) {
 	ptr->filters = filters;
 	ptr->fs = fs;
 	ptr->run_adding_gain = 1.0f;
+
+	eq_set_params(&filters[0], 100.0f, 0.0f, BWIDTH, fs);
+	eq_set_params(&filters[1], 200.0f, 0.0f, BWIDTH, fs);
+	eq_set_params(&filters[2], 400.0f, 0.0f, BWIDTH, fs);
+	eq_set_params(&filters[3], 1000.0f, 0.0f, BWIDTH, fs);
+	eq_set_params(&filters[4], 3000.0f, 0.0f, BWIDTH, fs);
+	eq_set_params(&filters[5], 6000.0f, 0.0f, BWIDTH, fs);
+	eq_set_params(&filters[6], 12000.0f, 0.0f, BWIDTH, fs);
+	eq_set_params(&filters[7], 15000.0f, 0.0f, BWIDTH, fs);
 
 	return (LADSPA_Handle)ptr;
 }

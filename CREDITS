@@ -28,6 +28,9 @@ any LADSPA plugin developer. It revealed bugs and LADSPA
 non-conformancies too many to mention in the TAP-plugins code, which
 could be fixed easily this way.
 
+Linium <intent@netpratique.fr> discovered a bug in EQ and EQ-BW:
+the plugins reinitialized themselves on each transport stop, which
+resulted in the effect disappearing after every STOP->PLAY.
 
 
 And, of course, special thanks to the Ardour [http://ardour.org] and
