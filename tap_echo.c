@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_echo.c,v 1.5 2004/02/21 17:33:36 tszilagyi Exp $
+    $Id: tap_echo.c,v 1.6 2004/08/05 16:18:44 tszilagyi Exp $
 */
 
 
@@ -212,6 +212,16 @@ connect_port_Echo(LADSPA_Handle Instance,
 }
 
 
+#define EPS 0.00000001f
+
+static inline float
+M(float x) {
+
+        if ((x > EPS) || (x < -EPS))
+                return x;
+        else
+                return 0.0f;
+}
 
 void 
 run_Echo(LADSPA_Handle Instance,
@@ -281,18 +291,18 @@ run_Echo(LADSPA_Handle Instance,
 
 		if (mode <= 0.0f) {
 			ptr->mpx_out_L = 
-				push_buffer(in_L + ptr->mpx_out_L * feedback_L,
-					    ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L);
+				M(push_buffer(in_L + ptr->mpx_out_L * feedback_L,
+					      ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L));
 			ptr->mpx_out_R =
-				push_buffer(in_R + ptr->mpx_out_R * feedback_R,
-					    ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R);
+				M(push_buffer(in_R + ptr->mpx_out_R * feedback_R,
+					      ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R));
 		} else {
 			ptr->mpx_out_R =
-				push_buffer(in_L + ptr->mpx_out_L * feedback_L,
-					    ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L);
+				M(push_buffer(in_L + ptr->mpx_out_L * feedback_L,
+					      ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L));
 			ptr->mpx_out_L =
-				push_buffer(in_R + ptr->mpx_out_R * feedback_R,
-					    ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R);
+				M(push_buffer(in_R + ptr->mpx_out_R * feedback_R,
+					      ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R));
 		}
 
 		if (rev_outch <= 0.0f) {
@@ -388,18 +398,18 @@ run_adding_gain_Echo(LADSPA_Handle Instance,
 
 		if (mode <= 0.0f) {
 			ptr->mpx_out_L = 
-				push_buffer(in_L + ptr->mpx_out_L * feedback_L,
-					    ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L);
+				M(push_buffer(in_L + ptr->mpx_out_L * feedback_L,
+					      ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L));
 			ptr->mpx_out_R =
-				push_buffer(in_R + ptr->mpx_out_R * feedback_R,
-					    ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R);
+				M(push_buffer(in_R + ptr->mpx_out_R * feedback_R,
+					      ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R));
 		} else {
 			ptr->mpx_out_R =
-				push_buffer(in_L + ptr->mpx_out_L * feedback_L,
-					    ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L);
+				M(push_buffer(in_L + ptr->mpx_out_L * feedback_L,
+					      ptr->ringbuffer_L, buflen_L, ptr->buffer_pos_L));
 			ptr->mpx_out_L =
-				push_buffer(in_R + ptr->mpx_out_R * feedback_R,
-					    ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R);
+				M(push_buffer(in_R + ptr->mpx_out_R * feedback_R,
+					      ptr->ringbuffer_R, buflen_R, ptr->buffer_pos_R));
 		}
 
 		if (rev_outch <= 0.0f) {
