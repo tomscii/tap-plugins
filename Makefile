@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.14 2004/06/21 14:14:32 tszilagyi Exp $
+#   $Id: Makefile,v 1.15 2004/08/02 18:14:50 tszilagyi Exp $
 
 
 #####################################################################
@@ -51,8 +51,10 @@ PLUGINS		=	tap_autopan.so \
 			tap_reverb.so \
 			tap_rotspeak.so \
 			tap_limiter.so \
+			tap_sigmoid.so \
 			tap_echo.so \
 			tap_tremolo.so \
+			tap_tubewarmth.so \
 			tap_vibrato.so
 
 
@@ -123,6 +125,14 @@ tap_pinknoise.so: tap_pinknoise.c tap_utils.h ladspa.h
 tap_doubler.so: tap_doubler.c tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_doubler.c -o tap_doubler.o
 	$(CC) $(LDFLAGS) -o tap_doubler.so tap_doubler.o
+
+tap_sigmoid.so: tap_sigmoid.c tap_utils.h ladspa.h
+	$(CC) $(CFLAGS) tap_sigmoid.c -o tap_sigmoid.o
+	$(CC) $(LDFLAGS) -o tap_sigmoid.so tap_sigmoid.o
+
+tap_tubewarmth.so: tap_tubewarmth.c tap_utils.h ladspa.h
+	$(CC) $(CFLAGS) tap_tubewarmth.c -o tap_tubewarmth.o
+	$(CC) $(LDFLAGS) -o tap_tubewarmth.so tap_tubewarmth.o
 
 
 # OTHER TARGETS

@@ -1141,4 +1141,54 @@
     </ladspa:hasSetting>
   </ladspa:SimulatorPlugin>
 
+  <ladspa:DistortionPlugin rdf:about="&ladspa;2157">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP Sigmoid Booster</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2157.0" ladspa:hasLabel="pre_gain" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2157.1" ladspa:hasLabel="post_gain" />
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2157.0" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2157.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:DistortionPlugin>
+
+  <ladspa:SimulatorPlugin rdf:about="&ladspa;2158">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP TubeWarmth</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2158.0" ladspa:hasLabel="drive" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2158.1" ladspa:hasLabel="blend" />
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="2.575">
+            <ladspa:forPort rdf:resource="&ladspa;2158.0" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="10.0">
+            <ladspa:forPort rdf:resource="&ladspa;2158.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:SimulatorPlugin>
+
 </rdf:RDF>
