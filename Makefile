@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.5 2004/02/21 17:33:35 tszilagyi Exp $
+#   $Id: Makefile,v 1.6 2004/02/25 18:34:55 tszilagyi Exp $
 
 
 #####################################################################
@@ -39,6 +39,7 @@ CC		=	gcc
 PLUGINS		=	tap_autopan.so \
 			tap_deesser.so \
 			tap_eq.so \
+			tap_eqbw.so \
 			tap_pitch.so \
 			tap_reverb.so \
 			tap_rotspeak.so \
@@ -58,6 +59,10 @@ tap_tremolo.so: tap_tremolo.c tap_utils.h ladspa.h
 tap_eq.so: tap_eq.c tap_utils.h ladspa.h
 	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_eq.c -o tap_eq.o
 	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_eq.so tap_eq.o
+
+tap_eqbw.so: tap_eqbw.c tap_utils.h ladspa.h
+	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_eqbw.c -o tap_eqbw.o
+	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_eqbw.so tap_eqbw.o
 
 tap_echo.so: tap_echo.c tap_utils.h ladspa.h
 	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_echo.c -o tap_echo.o
