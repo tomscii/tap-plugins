@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_chorusflanger.c,v 1.2 2004/08/15 17:35:58 tszilagyi Exp $
+    $Id: tap_chorusflanger.c,v 1.3 2004/08/17 09:15:21 tszilagyi Exp $
 */
 
 
@@ -53,10 +53,12 @@
 
 /*
  * Largest buffer lengths needed (at 192 kHz).
+ * These are summed up to determine the size of *one* buffer per channel.
  */
 #define DEPTH_BUFLEN 450
 #define DELAY_BUFLEN 19200
 
+/* Max. frequency setting */
 #define MAX_FREQ 5.0f
 
 /* bandwidth of highpass filters (in octaves) */
@@ -81,19 +83,12 @@ typedef struct {
 	LADSPA_Data * output_L;
 	LADSPA_Data * output_R;
 
-	LADSPA_Data * ring_depth_L;
-	unsigned long buflen_depth_L;
-	unsigned long pos_depth_L;
-	LADSPA_Data * ring_depth_R;
-	unsigned long buflen_depth_R;
-	unsigned long pos_depth_R;
-
-	LADSPA_Data * ring_delay_L;
-	unsigned long buflen_delay_L;
-	unsigned long pos_delay_L;
-	LADSPA_Data * ring_delay_R;
-	unsigned long buflen_delay_R;
-	unsigned long pos_delay_R;
+	LADSPA_Data * ring_L;
+	unsigned long buflen_L;
+	unsigned long pos_L;
+	LADSPA_Data * ring_R;
+	unsigned long buflen_R;
+	unsigned long pos_R;
 
 	biquad highpass_L;
 	biquad highpass_R;
@@ -118,30 +113,19 @@ instantiate_ChorusFlanger(const LADSPA_Descriptor * Descriptor,
 		((ChorusFlanger *)ptr)->run_adding_gain = 1.0f;
 
 
-		if ((((ChorusFlanger *)ptr)->ring_depth_L =
-		     calloc(DEPTH_BUFLEN * sample_rate / 192000, sizeof(LADSPA_Data))) == NULL)
+		if ((((ChorusFlanger *)ptr)->ring_L =
+		     calloc((DEPTH_BUFLEN + DELAY_BUFLEN) * sample_rate / 192000,
+			    sizeof(LADSPA_Data))) == NULL)
 			return NULL;
-		((ChorusFlanger *)ptr)->buflen_depth_L = DEPTH_BUFLEN * sample_rate / 192000;
-		((ChorusFlanger *)ptr)->pos_depth_L = 0;
+		((ChorusFlanger *)ptr)->buflen_L = (DEPTH_BUFLEN + DELAY_BUFLEN) * sample_rate / 192000;
+		((ChorusFlanger *)ptr)->pos_L = 0;
 
-		if ((((ChorusFlanger *)ptr)->ring_depth_R =
-		     calloc(DEPTH_BUFLEN * sample_rate / 192000, sizeof(LADSPA_Data))) == NULL)
+		if ((((ChorusFlanger *)ptr)->ring_R =
+		     calloc((DEPTH_BUFLEN + DELAY_BUFLEN) * sample_rate / 192000,
+			    sizeof(LADSPA_Data))) == NULL)
 			return NULL;
-		((ChorusFlanger *)ptr)->buflen_depth_R = DEPTH_BUFLEN * sample_rate / 192000;
-		((ChorusFlanger *)ptr)->pos_depth_R = 0;
-
-
-		if ((((ChorusFlanger *)ptr)->ring_delay_L =
-		     calloc(DELAY_BUFLEN * sample_rate / 192000, sizeof(LADSPA_Data))) == NULL)
-			return NULL;
-		((ChorusFlanger *)ptr)->buflen_delay_L = DELAY_BUFLEN * sample_rate / 192000;
-		((ChorusFlanger *)ptr)->pos_delay_L = 0;
-
-		if ((((ChorusFlanger *)ptr)->ring_delay_R =
-		     calloc(DELAY_BUFLEN * sample_rate / 192000, sizeof(LADSPA_Data))) == NULL)
-			return NULL;
-		((ChorusFlanger *)ptr)->buflen_delay_R = DELAY_BUFLEN * sample_rate / 192000;
-		((ChorusFlanger *)ptr)->pos_delay_R = 0;
+		((ChorusFlanger *)ptr)->buflen_R = (DEPTH_BUFLEN + DELAY_BUFLEN) * sample_rate / 192000;
+		((ChorusFlanger *)ptr)->pos_R = 0;
 
 
 		((ChorusFlanger *)ptr)->cm_phase = 0.0f;
@@ -159,13 +143,9 @@ activate_ChorusFlanger(LADSPA_Handle Instance) {
 	ChorusFlanger * ptr = (ChorusFlanger *)Instance;
 	unsigned long i;
 
-	for (i = 0; i < DEPTH_BUFLEN * ptr->sample_rate / 192000; i++) {
-		ptr->ring_depth_L[i] = 0.0f;
-		ptr->ring_depth_R[i] = 0.0f;
-	}
-	for (i = 0; i < DELAY_BUFLEN * ptr->sample_rate / 192000; i++) {
-		ptr->ring_delay_L[i] = 0.0f;
-		ptr->ring_delay_R[i] = 0.0f;
+	for (i = 0; i < (DEPTH_BUFLEN + DELAY_BUFLEN) * ptr->sample_rate / 192000; i++) {
+		ptr->ring_L[i] = 0.0f;
+		ptr->ring_R[i] = 0.0f;
 	}
 
 	biquad_init(&ptr->highpass_L);
@@ -245,8 +225,6 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 
 	LADSPA_Data in_L = 0.0f;
 	LADSPA_Data in_R = 0.0f;
-	LADSPA_Data mod_L = 0.0f;
-	LADSPA_Data mod_R = 0.0f;
 	LADSPA_Data d_L = 0.0f;
 	LADSPA_Data d_R = 0.0f;
 	LADSPA_Data f_L = 0.0f;
@@ -278,8 +256,8 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 		in_L = *(input_L++);
 		in_R = *(input_R++);
 
-		push_buffer(in_L, ptr->ring_depth_L, ptr->buflen_depth_L, &(ptr->pos_depth_L));
-		push_buffer(in_R, ptr->ring_depth_R, ptr->buflen_depth_R, &(ptr->pos_depth_R));
+		push_buffer(in_L, ptr->ring_L, ptr->buflen_L, &(ptr->pos_L));
+		push_buffer(in_R, ptr->ring_R, ptr->buflen_R, &(ptr->pos_R));
 		
 		ptr->cm_phase += freq / ptr->sample_rate * COS_TABLE_SIZE;
 		
@@ -293,35 +271,27 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 		while (phase_R >= COS_TABLE_SIZE)
 			phase_R -= COS_TABLE_SIZE;
 		
-		fpos_L = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
-		fpos_R = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
+		d_pos = delay * ptr->sample_rate / 1000.0f;
+		fpos_L = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
+		fpos_R = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
 		
 		n_L = floorf(fpos_L);
 		n_R = floorf(fpos_R);
 		rem_L = fpos_L - n_L;
 		rem_R = fpos_R - n_R;
 		
-		s_a_L = read_buffer(ptr->ring_depth_L, ptr->buflen_depth_L,
-				    ptr->pos_depth_L, (unsigned long) n_L);
-		s_b_L = read_buffer(ptr->ring_depth_L, ptr->buflen_depth_L,
-				    ptr->pos_depth_L, (unsigned long) n_L + 1);
+		s_a_L = read_buffer(ptr->ring_L, ptr->buflen_L,
+				    ptr->pos_L, (unsigned long) n_L);
+		s_b_L = read_buffer(ptr->ring_L, ptr->buflen_L,
+				    ptr->pos_L, (unsigned long) n_L + 1);
 		
-		s_a_R = read_buffer(ptr->ring_depth_R, ptr->buflen_depth_R,
-				    ptr->pos_depth_R, (unsigned long) n_R);
-		s_b_R = read_buffer(ptr->ring_depth_R, ptr->buflen_depth_R,
-				    ptr->pos_depth_R, (unsigned long) n_R + 1);
+		s_a_R = read_buffer(ptr->ring_R, ptr->buflen_R,
+				    ptr->pos_R, (unsigned long) n_R);
+		s_b_R = read_buffer(ptr->ring_R, ptr->buflen_R,
+				    ptr->pos_R, (unsigned long) n_R + 1);
 		
-		mod_L = ((1 - rem_L) * s_a_L + rem_L * s_b_L);
-		mod_R = ((1 - rem_R) * s_a_R + rem_R * s_b_R);
-		
-		push_buffer(mod_L, ptr->ring_delay_L, ptr->buflen_delay_L, &(ptr->pos_delay_L));
-		push_buffer(mod_R, ptr->ring_delay_R, ptr->buflen_delay_R, &(ptr->pos_delay_R));
-
-		d_pos = delay * ptr->sample_rate / 1000.0f;
-		d_L =  read_buffer(ptr->ring_delay_L, ptr->buflen_delay_L,
-				   ptr->pos_delay_L, (unsigned long) d_pos);
-		d_R =  read_buffer(ptr->ring_delay_R, ptr->buflen_delay_R,
-				   ptr->pos_delay_R, (unsigned long) d_pos);
+		d_L = ((1 - rem_L) * s_a_L + rem_L * s_b_L);
+		d_R = ((1 - rem_R) * s_a_R + rem_R * s_b_R);
 
 		f_L = biquad_run(&ptr->highpass_L, d_L);
 		f_R = biquad_run(&ptr->highpass_R, d_R);
@@ -369,8 +339,6 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 
 	LADSPA_Data in_L = 0.0f;
 	LADSPA_Data in_R = 0.0f;
-	LADSPA_Data mod_L = 0.0f;
-	LADSPA_Data mod_R = 0.0f;
 	LADSPA_Data d_L = 0.0f;
 	LADSPA_Data d_R = 0.0f;
 	LADSPA_Data f_L = 0.0f;
@@ -402,8 +370,8 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 		in_L = *(input_L++);
 		in_R = *(input_R++);
 
-		push_buffer(in_L, ptr->ring_depth_L, ptr->buflen_depth_L, &(ptr->pos_depth_L));
-		push_buffer(in_R, ptr->ring_depth_R, ptr->buflen_depth_R, &(ptr->pos_depth_R));
+		push_buffer(in_L, ptr->ring_L, ptr->buflen_L, &(ptr->pos_L));
+		push_buffer(in_R, ptr->ring_R, ptr->buflen_R, &(ptr->pos_R));
 		
 		ptr->cm_phase += freq / ptr->sample_rate * COS_TABLE_SIZE;
 		
@@ -417,35 +385,27 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 		while (phase_R >= COS_TABLE_SIZE)
 			phase_R -= COS_TABLE_SIZE;
 		
-		fpos_L = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
-		fpos_R = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
+		d_pos = delay * ptr->sample_rate / 1000.0f;
+		fpos_L = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
+		fpos_R = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
 		
 		n_L = floorf(fpos_L);
 		n_R = floorf(fpos_R);
 		rem_L = fpos_L - n_L;
 		rem_R = fpos_R - n_R;
 		
-		s_a_L = read_buffer(ptr->ring_depth_L, ptr->buflen_depth_L,
-				    ptr->pos_depth_L, (unsigned long) n_L);
-		s_b_L = read_buffer(ptr->ring_depth_L, ptr->buflen_depth_L,
-				    ptr->pos_depth_L, (unsigned long) n_L + 1);
+		s_a_L = read_buffer(ptr->ring_L, ptr->buflen_L,
+				    ptr->pos_L, (unsigned long) n_L);
+		s_b_L = read_buffer(ptr->ring_L, ptr->buflen_L,
+				    ptr->pos_L, (unsigned long) n_L + 1);
 		
-		s_a_R = read_buffer(ptr->ring_depth_R, ptr->buflen_depth_R,
-				    ptr->pos_depth_R, (unsigned long) n_R);
-		s_b_R = read_buffer(ptr->ring_depth_R, ptr->buflen_depth_R,
-				    ptr->pos_depth_R, (unsigned long) n_R + 1);
+		s_a_R = read_buffer(ptr->ring_R, ptr->buflen_R,
+				    ptr->pos_R, (unsigned long) n_R);
+		s_b_R = read_buffer(ptr->ring_R, ptr->buflen_R,
+				    ptr->pos_R, (unsigned long) n_R + 1);
 		
-		mod_L = ((1 - rem_L) * s_a_L + rem_L * s_b_L);
-		mod_R = ((1 - rem_R) * s_a_R + rem_R * s_b_R);
-		
-		push_buffer(mod_L, ptr->ring_delay_L, ptr->buflen_delay_L, &(ptr->pos_delay_L));
-		push_buffer(mod_R, ptr->ring_delay_R, ptr->buflen_delay_R, &(ptr->pos_delay_R));
-
-		d_pos = delay * ptr->sample_rate / 1000.0f;
-		d_L =  read_buffer(ptr->ring_delay_L, ptr->buflen_delay_L,
-				   ptr->pos_delay_L, (unsigned long) d_pos);
-		d_R =  read_buffer(ptr->ring_delay_R, ptr->buflen_delay_R,
-				   ptr->pos_delay_R, (unsigned long) d_pos);
+		d_L = ((1 - rem_L) * s_a_L + rem_L * s_b_L);
+		d_R = ((1 - rem_R) * s_a_R + rem_R * s_b_R);
 
 		f_L = biquad_run(&ptr->highpass_L, d_L);
 		f_R = biquad_run(&ptr->highpass_R, d_R);
@@ -465,10 +425,8 @@ void
 cleanup_ChorusFlanger(LADSPA_Handle Instance) {
 
   	ChorusFlanger * ptr = (ChorusFlanger *)Instance;
-	free(ptr->ring_depth_L);
-	free(ptr->ring_depth_R);
-	free(ptr->ring_delay_L);
-	free(ptr->ring_delay_R);
+	free(ptr->ring_L);
+	free(ptr->ring_R);
 	free(Instance);
 }
 
