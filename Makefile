@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.10 2004/05/25 16:01:34 tszilagyi Exp $
+#   $Id: Makefile,v 1.11 2004/06/12 18:33:32 tszilagyi Exp $
 
 
 #####################################################################
@@ -116,6 +116,7 @@ install: targets
 	cp *.so 		$(INSTALL_PLUGINS_DIR)
 	-mkdir -p		$(INSTALL_LRDF_DIR)
 	cp tap-plugins.rdf 	$(INSTALL_LRDF_DIR)
+	cp tap_reverb.rdf 	$(INSTALL_LRDF_DIR)
 
 targets:	$(PLUGINS)
 
