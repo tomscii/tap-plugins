@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.9 2004/06/09 20:10:09 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.10 2004/06/12 20:53:50 tszilagyi Exp $
 */
 
 
@@ -27,6 +27,10 @@
 #include "ladspa.h"
 #include "tap_utils.h"
 #include "tap_reverb_presets.h"
+
+
+/* ultra-aggressive denormalization */
+#define DENORM(x) (((*(unsigned int*)&(x))&0x60000000)==0)?0.0f:(x)
 
 
 /* load plugin data from reverb_data[] into an instance */
@@ -109,12 +113,17 @@ LADSPA_Data
 comb_run(LADSPA_Data insample, COMB_FILTER * comb) {
 
 	LADSPA_Data outsample;
+	LADSPA_Data pushin;
 
-	outsample = push_buffer(comb->fb_gain * insample + 
-				biquad_run(comb->filter, comb->fb_gain * comb->last_out),
+	pushin = comb->fb_gain * insample + biquad_run(comb->filter, comb->fb_gain * comb->last_out);
+	pushin = DENORM(pushin);
+
+	outsample = push_buffer(pushin,
+				/*comb->fb_gain * insample + 
+				  biquad_run(comb->filter, comb->fb_gain * comb->last_out),*/
 				comb->ringbuffer, comb->buflen, comb->buffer_pos);
 
-	outsample = FLUSH_TO_ZERO(outsample);
+	outsample = DENORM(outsample);
 	comb->last_out = outsample;
 
 	return outsample;
@@ -126,12 +135,17 @@ LADSPA_Data
 allp_run(LADSPA_Data insample, ALLP_FILTER * allp) {
 
 	LADSPA_Data outsample;
+	LADSPA_Data pushin;
 
-	outsample = push_buffer(allp->in_gain * allp->fb_gain * insample +
-				allp->fb_gain * allp->last_out,
+	pushin = allp->in_gain * allp->fb_gain * insample + allp->fb_gain * allp->last_out;
+	pushin = DENORM(pushin);
+
+	outsample = push_buffer(pushin,
+				/*allp->in_gain * allp->fb_gain * insample +
+				  allp->fb_gain * allp->last_out,*/
 				allp->ringbuffer, allp->buflen, allp->buffer_pos);
 
-	outsample = FLUSH_TO_ZERO(outsample);
+	outsample = DENORM(outsample);
 	allp->last_out = outsample;
 
 	return outsample;
