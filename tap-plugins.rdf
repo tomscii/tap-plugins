@@ -1035,4 +1035,37 @@
     </ladspa:hasSetting>
   </ladspa:TimePlugin>
 
+  <ladspa:UtilityPlugin rdf:about="&ladspa;2155">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP Pink/Fractal Noise</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2155.0" ladspa:hasLabel="fractal_dimension" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2155.1" ladspa:hasLabel="signal" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2155.2" ladspa:hasLabel="noise" />
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0.5">
+            <ladspa:forPort rdf:resource="&ladspa;2155.0" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2155.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="-90">
+            <ladspa:forPort rdf:resource="&ladspa;2155.2" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:UtilityPlugin>
+
 </rdf:RDF>
