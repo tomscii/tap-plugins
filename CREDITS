@@ -1,0 +1,30 @@
+The author would like to thank the following people for their help,
+support, comments, suggestions, patches etc. In no particular order.
+
+If you discover yourself in the following list and would like to
+remain nameless instead, please write to the author. You will be
+removed instantly.
+
+
+
+Anand Kumria <akumria@debian.org> constantly maintains a Debian
+package of this software.
+
+As the author of the lrdf library, Steve Harris <steve@plugin.org.uk>
+was kind enough to take a look at the RDF file describing these
+plugins.
+
+Alexander Koenig <alex@lisas.de> discovered that the AutoPanner (and
+Tremolo) didn't work at very small frequency values, and sent a patch
+that became the base of the solution.
+
+Forrest Cook <cook@lwn.net> suggested implementing an AutoPanner as a
+new TAP-plugin.
+
+
+
+And, of course, special thanks to the Ardour [http://ardour.org]
+development team for their tireless efforts in creating *the* Linux
+audio engineering platform (and the recommended host for these
+plugins). TAP-plugins aims to be a very small contribution to this
+effort.
