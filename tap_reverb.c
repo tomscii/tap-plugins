@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.11 2004/06/13 17:53:16 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.12 2004/06/14 16:43:55 tszilagyi Exp $
 */
 
 
@@ -25,13 +25,45 @@
 #include <math.h>
 
 #include "ladspa.h"
-#include "tap_utils.h"
+
+
+/* ***** VERY IMPORTANT! *****
+ *
+ * If you enable this, the plugin will use float arithmetics in DSP
+ * calculations.  This usually yields lower average CPU usage, but
+ * occasionaly may result in high CPU peaks which cause trouble to you
+ * and your JACK server.  The default is to use fixpoint arithmetics
+ * (with the following #define commented out).  But (depending on the
+ * processor on which you run the code) you may find floating point
+ * mode usable.
+ */
+/* #define REVERB_CALC_FLOAT */
+
+
+
+#ifndef REVERB_CALC_FLOAT
+typedef signed int sample;
+#endif
+
+#ifndef REVERB_CALC_FLOAT
+typedef sample rev_t;
+#else
+typedef LADSPA_Data rev_t;
+#endif
+
+
 #include "tap_reverb_presets.h"
 
 
-/* ultra-aggressive denormalization */
-//#define DENORM(x) (((*(unsigned int*)&(x))&0x60000000)==0)?0.0f:(x)
+
+#ifdef REVERB_CALC_FLOAT
 #define DENORM(x) (((unsigned char)(((*(unsigned int*)&(x))&0x7f800000)>>23))<103)?0.0f:(x)
+#else
+/* coefficient for float to sample (signed int) conversion */
+/* this allows for about 60 dB headroom above 0dB, if 0 dB is equivalent to 1.0f */
+/* As 2^31 equals more than 180 dB, about 120 dB dynamics remains below 0 dB */
+#define F2S 2147483
+#endif
 
 
 /* load plugin data from reverb_data[] into an instance */
@@ -114,19 +146,21 @@ load_plugin_data(LADSPA_Handle Instance) {
 
 
 /* push a sample into a comb filter and return the sample falling out */
-LADSPA_Data
-comb_run(LADSPA_Data insample, COMB_FILTER * comb) {
+rev_t
+comb_run(rev_t insample, COMB_FILTER * comb) {
 
-	LADSPA_Data outsample;
-	LADSPA_Data pushin;
+	rev_t outsample;
+	rev_t pushin;
 
 	pushin = comb->fb_gain * insample + biquad_run(comb->filter, comb->fb_gain * comb->last_out);
+#ifdef REVERB_CALC_FLOAT
 	pushin = DENORM(pushin);
-
+#endif
 	outsample = push_buffer(pushin,
 				comb->ringbuffer, comb->buflen, comb->buffer_pos);
-
+#ifdef REVERB_CALC_FLOAT
 	outsample = DENORM(outsample);
+#endif
 	comb->last_out = outsample;
 
 	return outsample;
@@ -134,19 +168,20 @@ comb_run(LADSPA_Data insample, COMB_FILTER * comb) {
 
 
 /* push a sample into an allpass filter and return the sample falling out */
-LADSPA_Data
-allp_run(LADSPA_Data insample, ALLP_FILTER * allp) {
+rev_t
+allp_run(rev_t insample, ALLP_FILTER * allp) {
 
-	LADSPA_Data outsample;
-	LADSPA_Data pushin;
-
+	rev_t outsample;
+	rev_t pushin;
 	pushin = allp->in_gain * allp->fb_gain * insample + allp->fb_gain * allp->last_out;
+#ifdef REVERB_CALC_FLOAT
 	pushin = DENORM(pushin);
-
+#endif
 	outsample = push_buffer(pushin,
 				allp->ringbuffer, allp->buflen, allp->buffer_pos);
-
+#ifdef REVERB_CALC_FLOAT
 	outsample = DENORM(outsample);
+#endif
 	allp->last_out = outsample;
 
 	return outsample;
@@ -395,12 +430,12 @@ run_Reverb(LADSPA_Handle Instance,
 	LADSPA_Data * input_R = ptr->input_R;
 	LADSPA_Data * output_R = ptr->output_R;
 
-	LADSPA_Data out_L = 0;
-	LADSPA_Data out_R = 0;
-	LADSPA_Data in_L = 0;
-	LADSPA_Data in_R = 0;
-	LADSPA_Data combs_out_L = 0;
-	LADSPA_Data combs_out_R = 0;
+	rev_t out_L = 0;
+	rev_t out_R = 0;
+	rev_t in_L = 0;
+	rev_t in_R = 0;
+	rev_t combs_out_L = 0;
+	rev_t combs_out_R = 0;
 
 
 	/* see if the user changed any control since last run */
@@ -418,9 +453,14 @@ run_Reverb(LADSPA_Handle Instance,
 	}
 
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		
+
+#ifdef REVERB_CALC_FLOAT		
 		in_L = *(input_L++);
 		in_R = *(input_R++);
+#else
+		in_L = (sample)((float)F2S * *(input_L++));
+		in_R = (sample)((float)F2S * *(input_R++));
+#endif
 
 		combs_out_L = in_L;
 		combs_out_R = in_R;
@@ -457,11 +497,17 @@ run_Reverb(LADSPA_Handle Instance,
 				biquad_run(((biquad *)(ptr->high_pass + 1)), combs_out_R);
 		}
 
+#ifdef REVERB_CALC_FLOAT
 		out_L = in_L * drylevel + combs_out_L * wetlevel;
 		out_R = in_R * drylevel + combs_out_R * wetlevel;
-
 		*(output_L++) = out_L;
 		*(output_R++) = out_R;
+#else
+		out_L = (sample)((float)in_L * drylevel + (float)combs_out_L * wetlevel);
+		out_R = (sample)((float)in_R * drylevel + (float)combs_out_R * wetlevel);
+		*(output_L++) = (float)out_L / (float)F2S;
+		*(output_R++) = (float)out_R / (float)F2S;
+#endif
 	}
 }
 
@@ -503,12 +549,12 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 	LADSPA_Data * input_R = ptr->input_R;
 	LADSPA_Data * output_R = ptr->output_R;
 
-	LADSPA_Data out_L = 0;
-	LADSPA_Data out_R = 0;
-	LADSPA_Data in_L = 0;
-	LADSPA_Data in_R = 0;
-	LADSPA_Data combs_out_L = 0;
-	LADSPA_Data combs_out_R = 0;
+	rev_t out_L = 0;
+	rev_t out_R = 0;
+	rev_t in_L = 0;
+	rev_t in_R = 0;
+	rev_t combs_out_L = 0;
+	rev_t combs_out_R = 0;
 
 
 	/* see if the user changed any control since last run */
@@ -527,8 +573,13 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 		
+#ifdef REVERB_CALC_FLOAT		
 		in_L = *(input_L++);
 		in_R = *(input_R++);
+#else
+		in_L = (sample)((float)F2S * *(input_L++));
+		in_R = (sample)((float)F2S * *(input_R++));
+#endif
 
 		combs_out_L = in_L;
 		combs_out_R = in_R;
@@ -565,11 +616,17 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 				biquad_run(((biquad *)(ptr->high_pass + 1)), combs_out_R);
 		}
 
+#ifdef REVERB_CALC_FLOAT		
 		out_L = in_L * drylevel + combs_out_L * wetlevel;
 		out_R = in_R * drylevel + combs_out_R * wetlevel;
-
 		*(output_L++) += out_L * ptr->run_adding_gain;
 		*(output_R++) += out_R * ptr->run_adding_gain;
+#else
+		out_L = (sample)((float)in_L * drylevel + (float)combs_out_L * wetlevel);
+		out_R = (sample)((float)in_R * drylevel + (float)combs_out_R * wetlevel);
+		*(output_L++) = (float)out_L * ptr->run_adding_gain / (float)F2S;
+		*(output_R++) = (float)out_R * ptr->run_adding_gain / (float)F2S;
+#endif
 	}
 }
 

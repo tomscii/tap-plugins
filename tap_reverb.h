@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.h,v 1.9 2004/06/12 17:42:39 tszilagyi Exp $
+    $Id: tap_reverb.h,v 1.10 2004/06/14 16:43:55 tszilagyi Exp $
 */
 
 
@@ -59,25 +59,178 @@
 #define FR_R_COMP         0.75f
 
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
+
+
+/* push a sample into a ringbuffer and return the sample falling out */
+static inline
+rev_t
+push_buffer(rev_t insample, rev_t * buffer,
+            unsigned long buflen, unsigned long * pos) {
+
+        rev_t outsample;
+
+        outsample = buffer[*pos];
+        buffer[(*pos)++] = insample;
+
+        if (*pos >= buflen)
+                *pos = 0;
+
+        return outsample;
+}
+
+/* read a value from a ringbuffer.
+ * n == 0 returns the oldest sample from the buffer.
+ * n == buflen-1 returns the sample written to the buffer
+ *      at the last push_buffer call.
+ * n must not exceed buflen-1, or your computer will explode.
+ */
+static inline
+rev_t
+read_buffer(rev_t * buffer, unsigned long buflen,
+            unsigned long pos, unsigned long n) {
+
+        while (n + pos >= buflen)
+                n -= buflen;
+        return buffer[n + pos];
+}
+
+
+/* overwrites a value in a ringbuffer, but pos stays the same.
+ * n == 0 overwrites the oldest sample pushed in the buffer.
+ * n == buflen-1 overwrites the sample written to the buffer
+ *      at the last push_buffer call.
+ * n must not exceed buflen-1, or your computer... you know.
+ */
+static inline
+void
+write_buffer(rev_t insample, rev_t * buffer, unsigned long buflen,
+             unsigned long pos, unsigned long n) {
+
+        while (n + pos >= buflen)
+                n -= buflen;
+        buffer[n + pos] = insample;
+}
+
+#define db2lin(x) ((x) > -90.0f ? powf(10.0f, (x) * 0.05f) : 0.0f)
+#define ABS(x)  (x)>0.0f?(x):-1.0f*(x)
+#define LN_2_2 0.34657359f
+#define FLUSH_TO_ZERO(x) (((*(unsigned int*)&(x))&0x7f800000)==0)?0.0f:(x)
+#define LIMIT(v,l,u) ((v)<(l)?(l):((v)>(u)?(u):(v)))
+
+#define BIQUAD_TYPE float
+typedef BIQUAD_TYPE bq_t;
+
 typedef struct {
-	LADSPA_Data feedback;
-	LADSPA_Data fb_gain;
-	LADSPA_Data freq_resp;
-	LADSPA_Data * ringbuffer;
+        bq_t a1;
+        bq_t a2;
+        bq_t b0;
+        bq_t b1;
+        bq_t b2;
+        rev_t x1;
+        rev_t x2;
+        rev_t y1;
+        rev_t y2;
+} biquad;
+
+
+static inline void biquad_init(biquad *f) {
+
+        f->x1 = 0.0f;
+        f->x2 = 0.0f;
+        f->y1 = 0.0f;
+        f->y2 = 0.0f;
+}
+
+static inline
+void
+eq_set_params(biquad *f, bq_t fc, bq_t gain, bq_t bw, bq_t fs) {
+
+        bq_t w = 2.0f * M_PI * LIMIT(fc, 1.0f, fs/2.0f) / fs;
+        bq_t cw = cosf(w);
+        bq_t sw = sinf(w);
+        bq_t J = pow(10.0f, gain * 0.025f);
+        bq_t g = sw * sinhf(LN_2_2 * LIMIT(bw, 0.0001f, 4.0f) * w / sw);
+        bq_t a0r = 1.0f / (1.0f + (g / J));
+
+        f->b0 = (1.0f + (g * J)) * a0r;
+        f->b1 = (-2.0f * cw) * a0r;
+        f->b2 = (1.0f - (g * J)) * a0r;
+        f->a1 = -(f->b1);
+        f->a2 = ((g / J) - 1.0f) * a0r;
+}
+
+static inline void lp_set_params(biquad *f, bq_t fc, bq_t bw, bq_t fs) {
+        bq_t omega = 2.0 * M_PI * fc/fs;
+        bq_t sn = sin(omega);
+        bq_t cs = cos(omega);
+        bq_t alpha = sn * sinh(M_LN2 / 2.0 * bw * omega / sn);
+        const float a0r = 1.0 / (1.0 + alpha);
+        f->b0 = a0r * (1.0 - cs) * 0.5;
+        f->b1 = a0r * (1.0 - cs);
+        f->b2 = a0r * (1.0 - cs) * 0.5;
+        f->a1 = a0r * (2.0 * cs);
+        f->a2 = a0r * (alpha - 1.0);
+}
+
+static inline
+void
+hp_set_params(biquad *f, bq_t fc, bq_t bw, bq_t fs)
+{
+        bq_t omega = 2.0 * M_PI * fc/fs;
+        bq_t sn = sin(omega);
+        bq_t cs = cos(omega);
+        bq_t alpha = sn * sinh(M_LN2 / 2.0 * bw * omega / sn);
+        const float a0r = 1.0 / (1.0 + alpha);
+        f->b0 = a0r * (1.0 + cs) * 0.5;
+        f->b1 = a0r * -(1.0 + cs);
+        f->b2 = a0r * (1.0 + cs) * 0.5;
+        f->a1 = a0r * (2.0 * cs);
+        f->a2 = a0r * (alpha - 1.0);
+}
+
+static inline
+rev_t
+biquad_run(biquad *f, rev_t x) {
+
+        rev_t y;
+
+        y = f->b0 * x + f->b1 * f->x1 + f->b2 * f->x2
+		+ f->a1 * f->y1 + f->a2 * f->y2;
+#ifdef REVERB_CALC_FLOAT
+        y = FLUSH_TO_ZERO(y);
+#endif
+        f->x2 = f->x1;
+        f->x1 = x;
+        f->y2 = f->y1;
+        f->y1 = y;
+
+        return y;
+}
+
+
+
+typedef struct {
+	float feedback;
+	float fb_gain;
+	float freq_resp;
+	rev_t * ringbuffer;
 	unsigned long buflen;
 	unsigned long * buffer_pos;
 	biquad * filter;
-	LADSPA_Data last_out;
+	rev_t last_out;
 } COMB_FILTER;
 
 typedef struct {
-	LADSPA_Data feedback;
-	LADSPA_Data fb_gain;
-	LADSPA_Data in_gain;
-	LADSPA_Data * ringbuffer;
+	float feedback;
+	float fb_gain;
+	float in_gain;
+	rev_t * ringbuffer;
 	unsigned long buflen;
 	unsigned long * buffer_pos;
-	LADSPA_Data last_out;
+	rev_t last_out;
 } ALLP_FILTER;
 
 
