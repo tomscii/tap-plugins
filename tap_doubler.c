@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_doubler.c,v 1.2 2004/06/21 14:24:13 tszilagyi Exp $
+    $Id: tap_doubler.c,v 1.3 2004/06/21 18:52:44 tszilagyi Exp $
 */
 
 
@@ -590,7 +590,7 @@ _init() {
 
 	stereo_descriptor->UniqueID = ID_STEREO;
 	stereo_descriptor->Label = strdup("tap_doubler");
-	stereo_descriptor->Properties = LADSPA_PROPERTY_HARD_RT_CAPABLE;
+	stereo_descriptor->Properties = 0;
 	stereo_descriptor->Name = strdup("TAP Fractal Doubler");
 	stereo_descriptor->Maker = strdup("Tom Szilagyi");
 	stereo_descriptor->Copyright = strdup("GPL");
@@ -636,7 +636,7 @@ _init() {
 	     ((LADSPA_PortRangeHint *)calloc(PORTCOUNT_STEREO, sizeof(LADSPA_PortRangeHint)))) == NULL)
 		exit(1);
 
-	stereo_descriptor->PortRangeHints	= (const LADSPA_PortRangeHint *)port_range_hints;
+	stereo_descriptor->PortRangeHints = (const LADSPA_PortRangeHint *)port_range_hints;
 	port_range_hints[TIME].HintDescriptor = 
 		(LADSPA_HINT_BOUNDED_BELOW |
 		 LADSPA_HINT_BOUNDED_ABOVE |

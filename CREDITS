@@ -41,6 +41,14 @@ Dynamics are among the "big winners".
 Luke Yelavich <luke@audioslack.com> sent a patch that cleaned up the
 Makefile a bit by introducing the variables CFLAGS and LDFLAGS.
 
+Jan Depner <eviltwin69@cableone.net> suggested implementing some kind
+of doubler plugin, and he gave me useful pointers about the Midpoint
+Displacement Algorithm with which a semi-random series of numbers
+following a fractal pattern can be generated. Without him, the TAP
+Fractal Doubler would have never been written. He also helped a lot
+with the CPU runaway problems in TAP Reverberator, by reporting the
+problem and trying out my solutions.
+
 
 And, of course, special thanks to the Ardour [http://ardour.org] and
 JACK [http://jackit.sf.net] development teams for their tireless
