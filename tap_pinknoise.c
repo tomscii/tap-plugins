@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_pinknoise.c,v 1.1 2004/06/19 17:14:20 tszilagyi Exp $
+    $Id: tap_pinknoise.c,v 1.2 2004/08/13 18:34:31 tszilagyi Exp $
 */
 
 
@@ -29,11 +29,10 @@
 #include "tap_utils.h"
 
 /* The Unique ID of the plugin: */
-
 #define ID_MONO         2155
 
-/* The port numbers for the plugin: */
 
+/* The port numbers for the plugin: */
 #define HURST  0
 #define SIGNAL 1
 #define NOISE  2
@@ -42,7 +41,6 @@
 
 
 /* Total number of ports */
-
 #define PORTCOUNT_MONO   5
 
 
@@ -50,7 +48,6 @@
 
 
 /* The structure used to hold port connection information and state */
-
 typedef struct {
 	LADSPA_Data * hurst;
 	LADSPA_Data * signal;
@@ -73,7 +70,6 @@ typedef struct {
  * N: length of v, MUST be integer power of 2 (ie 128, 256, ...)
  * H: Hurst constant, between 0 and 0.9999 (fractal dimension)
  */
-static inline
 void
 fractal(LADSPA_Data * v, int N, float H) {
 

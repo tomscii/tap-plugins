@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.15 2004/08/02 18:14:50 tszilagyi Exp $
+#   $Id: Makefile,v 1.16 2004/08/13 18:34:31 tszilagyi Exp $
 
 
 #####################################################################
@@ -39,6 +39,7 @@ CFLAGS		=	-I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -f
 LDFLAGS		=	-nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt
 
 PLUGINS		=	tap_autopan.so \
+			tap_chorusflanger.so \
 			tap_deesser.so \
 			tap_dynamics_m.so \
 			tap_dynamics_st.so \
@@ -133,6 +134,10 @@ tap_sigmoid.so: tap_sigmoid.c tap_utils.h ladspa.h
 tap_tubewarmth.so: tap_tubewarmth.c tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_tubewarmth.c -o tap_tubewarmth.o
 	$(CC) $(LDFLAGS) -o tap_tubewarmth.so tap_tubewarmth.o
+
+tap_chorusflanger.so: tap_chorusflanger.c tap_utils.h ladspa.h
+	$(CC) $(CFLAGS) tap_chorusflanger.c -o tap_chorusflanger.o
+	$(CC) $(LDFLAGS) -o tap_chorusflanger.so tap_chorusflanger.o
 
 
 # OTHER TARGETS

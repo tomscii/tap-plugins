@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_doubler.c,v 1.3 2004/06/21 18:52:44 tszilagyi Exp $
+    $Id: tap_doubler.c,v 1.4 2004/08/13 18:34:31 tszilagyi Exp $
 */
 
 
@@ -122,7 +122,6 @@ typedef struct {
  * N: length of v, MUST be integer power of 2 (ie 128, 256, ...)
  * H: Hurst constant, between 0 and 0.9999 (fractal dimension)
  */
-//static inline
 void
 fractal(LADSPA_Data * v, int N, float H) {
 
