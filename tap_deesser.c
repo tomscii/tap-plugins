@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_deesser.c,v 1.5 2004/03/03 15:47:49 tszilagyi Exp $
+    $Id: tap_deesser.c,v 1.6 2004/04/24 16:54:10 tszilagyi Exp $
 */
 
 
@@ -397,8 +397,8 @@ _init() {
 	mono_descriptor->PortNames = (const char **)port_names;
 	port_names[THRESHOLD] = strdup("Threshold Level [dB]");
 	port_names[FREQ] = strdup("Frequency [Hz]");
-	port_names[SIDECHAIN] = strdup("Sidechain Filter  [0: Highpass  1: Bandpass]");
-	port_names[MONITOR] = strdup("Monitor  [0: Audio  1: Sidechain]");
+	port_names[SIDECHAIN] = strdup("Sidechain Filter");
+	port_names[MONITOR] = strdup("Monitor");
 	port_names[ATTENUAT] = strdup("Attenuation [dB]");
 	port_names[INPUT] = strdup("Input");
 	port_names[OUTPUT] = strdup("Output");
