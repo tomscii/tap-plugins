@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_chorusflanger.c,v 1.1 2004/08/13 18:34:31 tszilagyi Exp $
+    $Id: tap_chorusflanger.c,v 1.2 2004/08/15 17:35:58 tszilagyi Exp $
 */
 
 
@@ -35,25 +35,21 @@
 
 /* The port numbers for the plugin: */
 
-#define SINE_RANDOM     0
-#define CMI             1
-#define DMI             2
-#define DEPTH           3
-#define DELAY           4
-#define CONTOUR         5
-#define DRYLEVEL        6
-#define WETLEVEL        7
-#define INPUT_L         8
-#define INPUT_R         9
-#define OUTPUT_L       10
-#define OUTPUT_R       11
+#define FREQ            0
+#define PHASE           1
+#define DEPTH           2
+#define DELAY           3
+#define CONTOUR         4
+#define DRYLEVEL        5
+#define WETLEVEL        6
+#define INPUT_L         7
+#define INPUT_R         8
+#define OUTPUT_L        9
+#define OUTPUT_R       10
 
 /* Total number of ports */
-#define PORTCOUNT_STEREO 12
+#define PORTCOUNT_STEREO 11
 
-
-/* Number of pink noise samples to be generated at once */
-#define NOISE_LEN 1024
 
 /*
  * Largest buffer lengths needed (at 192 kHz).
@@ -61,9 +57,7 @@
 #define DEPTH_BUFLEN 450
 #define DELAY_BUFLEN 19200
 
-
-/* Freq. corresponding to Common Mode Intensity of 1 in Sine mode */
-#define MAX_SINE_FREQ 2
+#define MAX_FREQ 5.0f
 
 /* bandwidth of highpass filters (in octaves) */
 #define HP_BW 1
@@ -75,9 +69,8 @@ LADSPA_Data cos_table[COS_TABLE_SIZE];
 
 /* The structure used to hold port connection information and state */
 typedef struct {
-	LADSPA_Data * sine_random;
-	LADSPA_Data * cmi;
-	LADSPA_Data * dmi;
+	LADSPA_Data * freq;
+	LADSPA_Data * phase;
 	LADSPA_Data * depth;
 	LADSPA_Data * delay;
 	LADSPA_Data * contour;
@@ -108,52 +101,9 @@ typedef struct {
 	float cm_phase;
 	float dm_phase;
 
-	LADSPA_Data * ring_pnoise;
-	unsigned long buflen_pnoise;
-	unsigned long pos_pnoise;
-	LADSPA_Data * ring_dnoise;
-	unsigned long buflen_dnoise;
-	unsigned long pos_dnoise;
-
-	unsigned long p_stretch;
-	unsigned long n_frac;
-	float frac_out;
-	float d_frac;
-	float p_frac;
-
-	LADSPA_Data old_cmi;
-
 	unsigned long sample_rate;
 	LADSPA_Data run_adding_gain;
 } ChorusFlanger;
-
-
-/* generate fractal pattern using Midpoint Displacement Method
- * v: buffer of floats to output fractal pattern to
- * N: length of v, MUST be integer power of 2 (ie 128, 256, ...)
- * H: Hurst constant, between 0 and 0.9999 (fractal dimension)
- */
-void
-fractal(LADSPA_Data * v, int N, float H) {
-
-        int l = N;
-        int k;
-        float r = 1.0f;
-        int c;
-
-        v[0] = 0;
-        while (l > 1) {
-                k = N / l;
-                for (c = 0; c < k; c++) {
-                        v[c*l + l/2] = (v[c*l] + v[((c+1) * l) % N]) / 2.0f +
-                                2.0f * r * (rand() - (float)RAND_MAX/2.0f) / (float)RAND_MAX;
-                        v[c*l + l/2] = LIMIT(v[c*l + l/2], -1.0f, 1.0f);
-                }
-                l /= 2;
-                r /= powf(2, H);
-        }
-}
-
 
 
 /* Construct a new plugin instance. */
@@ -194,26 +144,8 @@ instantiate_ChorusFlanger(const LADSPA_Descriptor * Descriptor,
 		((ChorusFlanger *)ptr)->pos_delay_R = 0;
 
 
-		if ((((ChorusFlanger *)ptr)->ring_pnoise =
-		     calloc(NOISE_LEN, sizeof(LADSPA_Data))) == NULL)
-			return NULL;
-		((ChorusFlanger *)ptr)->buflen_pnoise = NOISE_LEN;
-		((ChorusFlanger *)ptr)->pos_pnoise = 0;
-
-		if ((((ChorusFlanger *)ptr)->ring_dnoise =
-		     calloc(DELAY_BUFLEN * sample_rate / 192000, sizeof(LADSPA_Data))) == NULL)
-			return NULL;
-		((ChorusFlanger *)ptr)->buflen_dnoise = DELAY_BUFLEN * sample_rate / 192000;
-		((ChorusFlanger *)ptr)->pos_dnoise = 0;
-
-
 		((ChorusFlanger *)ptr)->cm_phase = 0.0f;
 		((ChorusFlanger *)ptr)->dm_phase = 0.0f;
-
-                ((ChorusFlanger *)ptr)->p_stretch = sample_rate / 50;
-                ((ChorusFlanger *)ptr)->n_frac = ((ChorusFlanger *)ptr)->p_stretch;
-		((ChorusFlanger *)ptr)->d_frac = 0.0f;
-		((ChorusFlanger *)ptr)->p_frac = 0.0f;
 
 		return ptr;
 	}
@@ -238,9 +170,6 @@ activate_ChorusFlanger(LADSPA_Handle Instance) {
 
 	biquad_init(&ptr->highpass_L);
 	biquad_init(&ptr->highpass_R);
-
-	/* out of range to force fractal() recalc on first run() */
-	ptr->old_cmi = -1;
 }
 
 
@@ -255,14 +184,11 @@ connect_port_ChorusFlanger(LADSPA_Handle Instance,
 	ChorusFlanger * ptr = (ChorusFlanger *)Instance;
 
 	switch (Port) {
-	case SINE_RANDOM:
-		ptr->sine_random = data;
+	case FREQ:
+		ptr->freq = data;
 		break;
-	case CMI:
-		ptr->cmi = data;
-		break;
-	case DMI:
-		ptr->dmi = data;
+	case PHASE:
+		ptr->phase = data;
 		break;
 	case DEPTH:
 		ptr->depth = data;
@@ -301,10 +227,8 @@ run_ChorusFlanger(LADSPA_Handle Instance,
   
 	ChorusFlanger * ptr = (ChorusFlanger *)Instance;
 
-	LADSPA_Data sine_random = LIMIT(*(ptr->sine_random),-1.1f,1.1f);
-
-	LADSPA_Data cmi = LIMIT(*(ptr->cmi), 0.0f, 1.0f);
-	LADSPA_Data dmi = LIMIT(*(ptr->dmi), 0.0f, 1.0f);
+	LADSPA_Data freq = LIMIT(*(ptr->freq), 0.0f, MAX_FREQ);
+	LADSPA_Data phase = LIMIT(*(ptr->phase), 0.0f, 180.0f) / 180.0f;
 	LADSPA_Data depth = 100.0f * ptr->sample_rate / 44100.0f
 		* LIMIT(*(ptr->depth),0.0f,100.0f) / 100.0f;
 	LADSPA_Data delay = LIMIT(*(ptr->delay),0.0f,100.0f);
@@ -342,37 +266,12 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 
 	float d_pos = 0.0f;
 
-	float prev_p_frac = 0.0f;
-	float dp_f = dmi;
-	float dp_pos = 0.0f;
-
-
 	if (delay < 1.0f)
 		delay = 1.0f;
 	delay = 100.0f - delay;
 
 	hp_set_params(&ptr->highpass_L, contour, HP_BW, ptr->sample_rate);
 	hp_set_params(&ptr->highpass_R, contour, HP_BW, ptr->sample_rate);
-
-	if (sine_random > 0.0f) {
-
-		if (ptr->old_cmi != cmi) {
-			ptr->frac_out = ptr->p_frac;
-			prev_p_frac = ptr->p_frac;
-			fractal(ptr->ring_pnoise, NOISE_LEN, 1.3f - cmi);
-			ptr->pos_pnoise = 0;
-			ptr->p_frac = push_buffer(0.0f, ptr->ring_pnoise,
-						  ptr->buflen_pnoise, &(ptr->pos_pnoise));
-			ptr->d_frac = (ptr->p_frac - prev_p_frac) / (float)(ptr->p_stretch);
-			ptr->n_frac = 0;
-			ptr->old_cmi = cmi;
-		}
-
-		if (dp_f < 0.01f)
-			dp_f = 0.01f;
-		dp_f = 1.0f - dp_f;
-	}
-
 
 	for (sample_index = 0; sample_index < sample_count; sample_index++) {
 
@@ -382,46 +281,21 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 		push_buffer(in_L, ptr->ring_depth_L, ptr->buflen_depth_L, &(ptr->pos_depth_L));
 		push_buffer(in_R, ptr->ring_depth_R, ptr->buflen_depth_R, &(ptr->pos_depth_R));
 		
-		if (sine_random <= 0.0f) { /* Sine Mode */
+		ptr->cm_phase += freq / ptr->sample_rate * COS_TABLE_SIZE;
 		
-			ptr->cm_phase += MAX_SINE_FREQ * cmi / ptr->sample_rate * COS_TABLE_SIZE;
-
-			while (ptr->cm_phase >= COS_TABLE_SIZE)
-				ptr->cm_phase -= COS_TABLE_SIZE;
-
-			ptr->dm_phase = dmi * COS_TABLE_SIZE / 2.0f;
-
-			phase_L = ptr->cm_phase;
-			phase_R = ptr->cm_phase + ptr->dm_phase;
-			while (phase_R >= COS_TABLE_SIZE)
-				phase_R -= COS_TABLE_SIZE;
-
-			fpos_L = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
-			fpos_R = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
-
-		} else { /* Fractal Mode */
-			
-			if (ptr->n_frac < ptr->p_stretch) {
-				ptr->frac_out += ptr->d_frac;
-				ptr->n_frac++;
-			} else {
-				ptr->frac_out = ptr->p_frac;
-				prev_p_frac = ptr->p_frac;
-				if (!ptr->pos_pnoise) {
-					fractal(ptr->ring_pnoise, NOISE_LEN, 1.3f - cmi);
-				}
-				ptr->p_frac = push_buffer(0.0f, ptr->ring_pnoise,
-							  ptr->buflen_pnoise, &(ptr->pos_pnoise));
-				ptr->d_frac = (ptr->p_frac - prev_p_frac) / (float)(ptr->p_stretch);
-				ptr->n_frac = 0;
-			}
-
-			fpos_L = depth * (0.5f + 0.5f * ptr->frac_out);
-			push_buffer(fpos_L, ptr->ring_dnoise, ptr->buflen_dnoise, &(ptr->pos_dnoise));
-			dp_pos = dp_f * ptr->sample_rate / 10.0f;
-			fpos_R = read_buffer(ptr->ring_dnoise, ptr->buflen_dnoise, ptr->pos_dnoise, dp_pos);
-		}
-
+		while (ptr->cm_phase >= COS_TABLE_SIZE)
+			ptr->cm_phase -= COS_TABLE_SIZE;
+		
+		ptr->dm_phase = phase * COS_TABLE_SIZE / 2.0f;
+		
+		phase_L = ptr->cm_phase;
+		phase_R = ptr->cm_phase + ptr->dm_phase;
+		while (phase_R >= COS_TABLE_SIZE)
+			phase_R -= COS_TABLE_SIZE;
+		
+		fpos_L = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
+		fpos_R = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
+		
 		n_L = floorf(fpos_L);
 		n_R = floorf(fpos_R);
 		rem_L = fpos_L - n_L;
@@ -477,10 +351,8 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
   
 	ChorusFlanger * ptr = (ChorusFlanger *)Instance;
 
-	LADSPA_Data sine_random = LIMIT(*(ptr->sine_random),-1.1f,1.1f);
-
-	LADSPA_Data cmi = LIMIT(*(ptr->cmi), 0.0f, 1.0f);
-	LADSPA_Data dmi = LIMIT(*(ptr->dmi), 0.0f, 1.0f);
+	LADSPA_Data freq = LIMIT(*(ptr->freq), 0.0f, MAX_FREQ);
+	LADSPA_Data phase = LIMIT(*(ptr->phase), 0.0f, 180.0f) / 180.0f;
 	LADSPA_Data depth = 100.0f * ptr->sample_rate / 44100.0f
 		* LIMIT(*(ptr->depth),0.0f,100.0f) / 100.0f;
 	LADSPA_Data delay = LIMIT(*(ptr->delay),0.0f,100.0f);
@@ -518,37 +390,12 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 
 	float d_pos = 0.0f;
 
-	float prev_p_frac = 0.0f;
-	float dp_f = dmi;
-	float dp_pos = 0.0f;
-
-
 	if (delay < 1.0f)
 		delay = 1.0f;
 	delay = 100.0f - delay;
 
 	hp_set_params(&ptr->highpass_L, contour, HP_BW, ptr->sample_rate);
 	hp_set_params(&ptr->highpass_R, contour, HP_BW, ptr->sample_rate);
-
-	if (sine_random > 0.0f) {
-
-		if (ptr->old_cmi != cmi) {
-			ptr->frac_out = ptr->p_frac;
-			prev_p_frac = ptr->p_frac;
-			fractal(ptr->ring_pnoise, NOISE_LEN, 1.3f - cmi);
-			ptr->pos_pnoise = 0;
-			ptr->p_frac = push_buffer(0.0f, ptr->ring_pnoise,
-						  ptr->buflen_pnoise, &(ptr->pos_pnoise));
-			ptr->d_frac = (ptr->p_frac - prev_p_frac) / (float)(ptr->p_stretch);
-			ptr->n_frac = 0;
-			ptr->old_cmi = cmi;
-		}
-
-		if (dp_f < 0.01f)
-			dp_f = 0.01f;
-		dp_f = 1.0f - dp_f;
-	}
-
 
 	for (sample_index = 0; sample_index < sample_count; sample_index++) {
 
@@ -558,46 +405,21 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 		push_buffer(in_L, ptr->ring_depth_L, ptr->buflen_depth_L, &(ptr->pos_depth_L));
 		push_buffer(in_R, ptr->ring_depth_R, ptr->buflen_depth_R, &(ptr->pos_depth_R));
 		
-		if (sine_random <= 0.0f) { /* Sine Mode */
+		ptr->cm_phase += freq / ptr->sample_rate * COS_TABLE_SIZE;
 		
-			ptr->cm_phase += MAX_SINE_FREQ * cmi / ptr->sample_rate * COS_TABLE_SIZE;
-
-			while (ptr->cm_phase >= COS_TABLE_SIZE)
-				ptr->cm_phase -= COS_TABLE_SIZE;
-
-			ptr->dm_phase = dmi * COS_TABLE_SIZE / 2.0f;
-
-			phase_L = ptr->cm_phase;
-			phase_R = ptr->cm_phase + ptr->dm_phase;
-			while (phase_R >= COS_TABLE_SIZE)
-				phase_R -= COS_TABLE_SIZE;
-
-			fpos_L = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
-			fpos_R = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
-
-		} else { /* Fractal Mode */
-			
-			if (ptr->n_frac < ptr->p_stretch) {
-				ptr->frac_out += ptr->d_frac;
-				ptr->n_frac++;
-			} else {
-				ptr->frac_out = ptr->p_frac;
-				prev_p_frac = ptr->p_frac;
-				if (!ptr->pos_pnoise) {
-					fractal(ptr->ring_pnoise, NOISE_LEN, 1.3f - cmi);
-				}
-				ptr->p_frac = push_buffer(0.0f, ptr->ring_pnoise,
-							  ptr->buflen_pnoise, &(ptr->pos_pnoise));
-				ptr->d_frac = (ptr->p_frac - prev_p_frac) / (float)(ptr->p_stretch);
-				ptr->n_frac = 0;
-			}
-
-			fpos_L = depth * (0.5f + 0.5f * ptr->frac_out);
-			push_buffer(fpos_L, ptr->ring_dnoise, ptr->buflen_dnoise, &(ptr->pos_dnoise));
-			dp_pos = dp_f * ptr->sample_rate / 10.0f;
-			fpos_R = read_buffer(ptr->ring_dnoise, ptr->buflen_dnoise, ptr->pos_dnoise, dp_pos);
-		}
-
+		while (ptr->cm_phase >= COS_TABLE_SIZE)
+			ptr->cm_phase -= COS_TABLE_SIZE;
+		
+		ptr->dm_phase = phase * COS_TABLE_SIZE / 2.0f;
+		
+		phase_L = ptr->cm_phase;
+		phase_R = ptr->cm_phase + ptr->dm_phase;
+		while (phase_R >= COS_TABLE_SIZE)
+			phase_R -= COS_TABLE_SIZE;
+		
+		fpos_L = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
+		fpos_R = depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
+		
 		n_L = floorf(fpos_L);
 		n_R = floorf(fpos_R);
 		rem_L = fpos_L - n_L;
@@ -647,8 +469,6 @@ cleanup_ChorusFlanger(LADSPA_Handle Instance) {
 	free(ptr->ring_depth_R);
 	free(ptr->ring_delay_L);
 	free(ptr->ring_delay_R);
-	free(ptr->ring_pnoise);
-	free(ptr->ring_dnoise);
 	free(Instance);
 }
 
@@ -677,7 +497,7 @@ _init() {
 
 	stereo_descriptor->UniqueID = ID_STEREO;
 	stereo_descriptor->Label = strdup("tap_chorusflanger");
-	stereo_descriptor->Properties = 0;
+	stereo_descriptor->Properties = LADSPA_PROPERTY_HARD_RT_CAPABLE;
 	stereo_descriptor->Name = strdup("TAP Chorus/Flanger");
 	stereo_descriptor->Maker = strdup("Tom Szilagyi");
 	stereo_descriptor->Copyright = strdup("GPL");
@@ -688,9 +508,8 @@ _init() {
 		exit(1);
 
 	stereo_descriptor->PortDescriptors = (const LADSPA_PortDescriptor *)port_descriptors;
-	port_descriptors[SINE_RANDOM] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
-	port_descriptors[CMI] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
-	port_descriptors[DMI] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+	port_descriptors[FREQ] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+	port_descriptors[PHASE] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 	port_descriptors[DEPTH] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 	port_descriptors[DELAY] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 	port_descriptors[CONTOUR] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
@@ -706,9 +525,8 @@ _init() {
 		exit(1);
 
 	stereo_descriptor->PortNames = (const char **)port_names;
-	port_names[SINE_RANDOM] = strdup("Fractal Mode");
-	port_names[CMI] = strdup("Common Mode Intensity");
-	port_names[DMI] = strdup("Differential Mode Intensity");
+	port_names[FREQ] = strdup("Frequency [Hz]");
+	port_names[PHASE] = strdup("L/R Phase Shift [deg]");
 	port_names[DEPTH] = strdup("Depth [%]");
 	port_names[DELAY] = strdup("Delay [ms]");
 	port_names[CONTOUR] = strdup("Contour [Hz]");
@@ -724,14 +542,11 @@ _init() {
 		exit(1);
 
 	stereo_descriptor->PortRangeHints = (const LADSPA_PortRangeHint *)port_range_hints;
-	port_range_hints[SINE_RANDOM].HintDescriptor = 
-		(LADSPA_HINT_TOGGLED |
-		 LADSPA_HINT_DEFAULT_0);
-	port_range_hints[CMI].HintDescriptor = 
+	port_range_hints[FREQ].HintDescriptor = 
 		(LADSPA_HINT_BOUNDED_BELOW |
 		 LADSPA_HINT_BOUNDED_ABOVE |
-		 LADSPA_HINT_DEFAULT_MIDDLE);
-	port_range_hints[DMI].HintDescriptor = 
+		 LADSPA_HINT_DEFAULT_LOW);
+	port_range_hints[PHASE].HintDescriptor = 
 		(LADSPA_HINT_BOUNDED_BELOW |
 		 LADSPA_HINT_BOUNDED_ABOVE |
 		 LADSPA_HINT_DEFAULT_MIDDLE);
@@ -755,10 +570,10 @@ _init() {
 		(LADSPA_HINT_BOUNDED_BELOW |
 		 LADSPA_HINT_BOUNDED_ABOVE |
 		 LADSPA_HINT_DEFAULT_0);
-	port_range_hints[CMI].LowerBound = 0.0f;
-	port_range_hints[CMI].UpperBound = 1.0f;
-	port_range_hints[DMI].LowerBound = 0.0f;
-	port_range_hints[DMI].UpperBound = 1.0f;
+	port_range_hints[FREQ].LowerBound = 0.0f;
+	port_range_hints[FREQ].UpperBound = MAX_FREQ;
+	port_range_hints[PHASE].LowerBound = 0.0f;
+	port_range_hints[PHASE].UpperBound = 180.0f;
 	port_range_hints[DEPTH].LowerBound = 0.0f;
 	port_range_hints[DEPTH].UpperBound = 100.0f;
 	port_range_hints[DELAY].LowerBound = 0.0f;
