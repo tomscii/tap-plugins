@@ -1,6 +1,9 @@
 /*                                                     -*- linux-c -*-
     Copyright (C) 2004 Tom Szilagyi
     
+    Patches were received from:
+        Alex ... <>
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -15,7 +18,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_autopan.c,v 1.1 2004/02/04 15:35:49 tszilagyi Exp $
+    $Id: tap_autopan.c,v 1.2 2004/02/07 22:03:37 tszilagyi Exp $
 */
 
 
@@ -58,7 +61,7 @@ typedef struct {
 	LADSPA_Data * output_L;
 	LADSPA_Data * output_R;
 	unsigned long SampleRate;
-	unsigned long Phase;
+	LADSPA_Data Phase;
 	LADSPA_Data cos_table[1024];
 	LADSPA_Data run_adding_gain;
 } AutoPan;
@@ -146,18 +149,21 @@ run_AutoPan(LADSPA_Handle Instance,
 	LADSPA_Data depth = *(ptr->depth);
 	LADSPA_Data gain = db2lin(*(ptr->gain));
 	unsigned long sample_index;
-	unsigned long phase_L = 0;
-	unsigned long phase_R = 0;
+	LADSPA_Data phase_L = 0;
+	LADSPA_Data phase_R = 0;
 	
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		phase_L = 1024 * freq * sample_index / ptr->SampleRate + ptr->Phase;
-		phase_L %= 1024;
-		phase_R = (phase_L + 512) % 1024;
+		phase_L = 1024.0f * freq * sample_index / ptr->SampleRate + ptr->Phase;
+		while (phase_L > 1024.0f)
+		        phase_L -= 1024.0f;  
+ 		phase_R = phase_L + 512.0f;
+		while (phase_R > 1024.0f)
+		        phase_R -= 1024.0f;  
 
 		*(output_L++) = *(input_L++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_L]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_L]);
 		*(output_R++) = *(input_R++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_R]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_R]);
 	}
 	ptr->Phase = phase_L;
 }
@@ -190,18 +196,21 @@ run_adding_AutoPan(LADSPA_Handle Instance,
 	LADSPA_Data depth = *(ptr->depth);
 	LADSPA_Data gain = db2lin(*(ptr->gain));
 	unsigned long sample_index;
-	unsigned long phase_L = 0;
-	unsigned long phase_R = 0;
+	LADSPA_Data phase_L = 0;
+	LADSPA_Data phase_R = 0;
 	
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		phase_L = 1024 * freq * sample_index / ptr->SampleRate + ptr->Phase;
-		phase_L %= 1024;
-		phase_R = (phase_L + 512) % 1024;
+		phase_L = 1024.0f * freq * sample_index / ptr->SampleRate + ptr->Phase;
+		while (phase_L > 1024.0f)
+		        phase_L -= 1024.0f;  
+ 		phase_R = phase_L + 512.0f;
+		while (phase_R > 1024.0f)
+		        phase_R -= 1024.0f;  
 
 		*(output_L++) += *(input_L++) * gain * ptr->run_adding_gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_L]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_L]);
 		*(output_R++) += *(input_R++) * gain * ptr->run_adding_gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[phase_R]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_R]);
 	}
 	ptr->Phase = phase_L;
 }
@@ -209,7 +218,7 @@ run_adding_AutoPan(LADSPA_Handle Instance,
 
 
 
-/* Throw away a AutoPan effect instance. */
+/* Throw away an AutoPan effect instance. */
 void 
 cleanup_AutoPan(LADSPA_Handle Instance) {
 	free(Instance);
