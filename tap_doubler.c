@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_doubler.c,v 1.1 2004/06/21 14:14:32 tszilagyi Exp $
+    $Id: tap_doubler.c,v 1.2 2004/06/21 14:24:13 tszilagyi Exp $
 */
 
 
@@ -54,16 +54,13 @@
 #define PORTCOUNT_STEREO 12
 
 
-/* number of pink noise samples to be generated at once */
+/* Number of pink noise samples to be generated at once */
 #define NOISE_LEN 1024
 
 /*
- * This has to be bigger than sample_rate / (3000*PI) for any sample rate.
- * At 192 kHz 42 is needed.
+ * Largest buffer length needed (at 192 kHz).
  */
 #define BUFLEN 11520
-
-/*#define PM_FREQ 30.0f*/
 
 
 
