@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.10 2004/06/12 20:53:50 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.11 2004/06/13 17:53:16 tszilagyi Exp $
 */
 
 
@@ -30,7 +30,8 @@
 
 
 /* ultra-aggressive denormalization */
-#define DENORM(x) (((*(unsigned int*)&(x))&0x60000000)==0)?0.0f:(x)
+//#define DENORM(x) (((*(unsigned int*)&(x))&0x60000000)==0)?0.0f:(x)
+#define DENORM(x) (((unsigned char)(((*(unsigned int*)&(x))&0x7f800000)>>23))<103)?0.0f:(x)
 
 
 /* load plugin data from reverb_data[] into an instance */
@@ -52,7 +53,9 @@ load_plugin_data(LADSPA_Handle Instance) {
 		((COMB_FILTER *)(ptr->combs + 2*i))->feedback = 
 			reverb_data[m].combs[i].feedback;
 		((COMB_FILTER *)(ptr->combs + 2*i))->freq_resp =
-			reverb_data[m].combs[i].freq_resp;
+			LIMIT(reverb_data[m].combs[i].freq_resp
+			      * powf(ptr->sample_rate / 44100.0f, 0.8f),
+			      0.0f, 1.0f);
 
 		((COMB_FILTER *)(ptr->combs + 2*i+1))->buflen =
 			((COMB_FILTER *)(ptr->combs + 2*i))->buflen;
@@ -68,10 +71,12 @@ load_plugin_data(LADSPA_Handle Instance) {
 		((COMB_FILTER *)(ptr->combs + 2*i+1))->last_out = 0;
 
 		lp_set_params(((COMB_FILTER *)(ptr->combs + 2*i))->filter,
-			      2000.0f + 13000.0f * (1 - reverb_data[m].combs[i].freq_resp),
+			      2000.0f + 13000.0f * (1 - reverb_data[m].combs[i].freq_resp)
+			      * ptr->sample_rate / 44100.0f,
 			      BANDPASS_BWIDTH, ptr->sample_rate);
 		lp_set_params(((COMB_FILTER *)(ptr->combs + 2*i+1))->filter,
-			      2000.0f + 13000.0f * (1 - reverb_data[m].combs[i].freq_resp),
+			      2000.0f + 13000.0f * (1 - reverb_data[m].combs[i].freq_resp)
+			      * ptr->sample_rate / 44100.0f,
 			      BANDPASS_BWIDTH, ptr->sample_rate);
 	}
 
@@ -119,8 +124,6 @@ comb_run(LADSPA_Data insample, COMB_FILTER * comb) {
 	pushin = DENORM(pushin);
 
 	outsample = push_buffer(pushin,
-				/*comb->fb_gain * insample + 
-				  biquad_run(comb->filter, comb->fb_gain * comb->last_out),*/
 				comb->ringbuffer, comb->buflen, comb->buffer_pos);
 
 	outsample = DENORM(outsample);
@@ -141,8 +144,6 @@ allp_run(LADSPA_Data insample, ALLP_FILTER * allp) {
 	pushin = DENORM(pushin);
 
 	outsample = push_buffer(pushin,
-				/*allp->in_gain * allp->fb_gain * insample +
-				  allp->fb_gain * allp->last_out,*/
 				allp->ringbuffer, allp->buflen, allp->buffer_pos);
 
 	outsample = DENORM(outsample);
