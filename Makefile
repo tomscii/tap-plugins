@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.7 2004/03/03 14:37:09 tszilagyi Exp $
+#   $Id: Makefile,v 1.8 2004/03/03 15:47:49 tszilagyi Exp $
 
 
 #####################################################################

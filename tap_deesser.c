@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_deesser.c,v 1.4 2004/02/21 17:33:36 tszilagyi Exp $
+    $Id: tap_deesser.c,v 1.5 2004/03/03 15:47:49 tszilagyi Exp $
 */
 
 
@@ -206,7 +206,7 @@ run_DeEsser(LADSPA_Handle Instance,
 	LADSPA_Data threshold = LIMIT(*(ptr->threshold),-50.0f,10.0f);
 	LADSPA_Data freq = LIMIT(*(ptr->freq),2000.0f,16000.0f);
 	LADSPA_Data sidechain = LIMIT(*(ptr->sidechain),0.0f,1.0f);
-	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,0.0f);
+	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,1.0f);
 	unsigned long sample_index;
 
 	LADSPA_Data in = 0;
@@ -280,7 +280,7 @@ run_adding_DeEsser(LADSPA_Handle Instance,
 	LADSPA_Data threshold = LIMIT(*(ptr->threshold),-50.0f,10.0f);
 	LADSPA_Data freq = LIMIT(*(ptr->freq),2000.0f,16000.0f);
 	LADSPA_Data sidechain = LIMIT(*(ptr->sidechain),0.0f,1.0f);
-	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,0.0f);
+	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,1.0f);
 	unsigned long sample_index;
 
 	LADSPA_Data in = 0;
