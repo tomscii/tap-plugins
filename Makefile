@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.13 2004/06/19 17:14:20 tszilagyi Exp $
+#   $Id: Makefile,v 1.14 2004/06/21 14:14:32 tszilagyi Exp $
 
 
 #####################################################################
@@ -44,6 +44,7 @@ PLUGINS		=	tap_autopan.so \
 			tap_dynamics_st.so \
 			tap_eq.so \
 			tap_eqbw.so \
+			tap_doubler.so \
 			tap_pinknoise.so \
 			tap_pitch.so \
 			tap_reflector.so \
@@ -118,6 +119,10 @@ tap_reflector.so: tap_reflector.c tap_utils.h ladspa.h
 tap_pinknoise.so: tap_pinknoise.c tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_pinknoise.c -o tap_pinknoise.o
 	$(CC) $(LDFLAGS) -o tap_pinknoise.so tap_pinknoise.o
+
+tap_doubler.so: tap_doubler.c tap_utils.h ladspa.h
+	$(CC) $(CFLAGS) tap_doubler.c -o tap_doubler.o
+	$(CC) $(LDFLAGS) -o tap_doubler.so tap_doubler.o
 
 
 # OTHER TARGETS
