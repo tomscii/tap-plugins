@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_utils.h,v 1.3 2004/02/14 21:52:10 tszilagyi Exp $
+    $Id: tap_utils.h,v 1.4 2004/02/19 20:30:58 tszilagyi Exp $
 */
 
 

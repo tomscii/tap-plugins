@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_vibrato.c,v 1.1 2004/02/14 21:54:28 tszilagyi Exp $
+    $Id: tap_vibrato.c,v 1.2 2004/02/19 20:30:58 tszilagyi Exp $
 */
 
 
@@ -185,6 +185,9 @@ run_Vibrato(LADSPA_Handle Instance,
 	LADSPA_Data s_a, s_b;
 
 
+	if (freq == 0.0f)
+		depth = 0.0f;
+
 	for (sample_index = 0; sample_index < sample_count; sample_index++) {
 
 		in = *(input++);
@@ -251,6 +254,9 @@ run_adding_Vibrato(LADSPA_Handle Instance,
 	LADSPA_Data rem = 0.0f;
 	LADSPA_Data s_a, s_b;
 
+
+	if (freq == 0.0f)
+		depth = 0.0f;
 
 	for (sample_index = 0; sample_index < sample_count; sample_index++) {
 

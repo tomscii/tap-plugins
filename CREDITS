@@ -33,6 +33,6 @@ could be fixed right away.
 
 And, of course, special thanks to the Ardour [http://ardour.org] and
 JACK [http://jackit.sf.net] development teams for their tireless
-efforts in creating *the* Linux audio engineering platform (and
-besides that, the recommended host for these plugins). TAP-plugins
-aims to be a very small contribution to this effort.
+efforts in creating the Linux audio engineering platform (and besides
+that, the recommended host for these plugins). TAP-plugins aims to be
+a very small contribution to this effort.

@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.3 2004/02/14 21:52:10 tszilagyi Exp $
+#   $Id: Makefile,v 1.4 2004/02/19 20:30:58 tszilagyi Exp $
 
 
 #####################################################################
@@ -39,6 +39,7 @@ CC		=	gcc
 PLUGINS		=	tap_autopan.so \
 			tap_deesser.so \
 			tap_eq.so \
+			tap_pitch.so \
 			tap_reverb.so \
 			tap_rotspeak.so \
 			tap_limiter.so \
@@ -85,6 +86,10 @@ tap_vibrato.so: tap_vibrato.c tap_utils.h ladspa.h
 tap_rotspeak.so: tap_rotspeak.c tap_utils.h ladspa.h
 	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_rotspeak.c -o tap_rotspeak.o
 	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_rotspeak.so tap_rotspeak.o
+
+tap_pitch.so: tap_pitch.c tap_utils.h ladspa.h
+	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_pitch.c -o tap_pitch.o
+	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_pitch.so tap_pitch.o
 
 
 # OTHER TARGETS
