@@ -18,7 +18,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_autopan.c,v 1.3 2004/02/07 22:09:30 tszilagyi Exp $
+    $Id: tap_autopan.c,v 1.4 2004/02/14 21:52:10 tszilagyi Exp $
 */
 
 
@@ -50,6 +50,10 @@
 #define PORTCOUNT_STEREO   7
 
 
+/* cosine table for fast computations */
+LADSPA_Data cos_table[1024];
+
+
 /* The structure used to hold port connection information and state */
 
 typedef struct {
@@ -62,7 +66,6 @@ typedef struct {
 	LADSPA_Data * output_R;
 	unsigned long SampleRate;
 	LADSPA_Data Phase;
-	LADSPA_Data cos_table[1024];
 	LADSPA_Data run_adding_gain;
 } AutoPan;
 
@@ -74,14 +77,10 @@ instantiate_AutoPan(const LADSPA_Descriptor * Descriptor,
 		    unsigned long             SampleRate) {
 	
 	LADSPA_Handle * ptr;
-	int i;
 	
 	if ((ptr = malloc(sizeof(AutoPan))) != NULL) {
 		((AutoPan *)ptr)->SampleRate = SampleRate;
 		((AutoPan *)ptr)->run_adding_gain = 1.0;
-		for (i = 0; i < 1024; i++)
-			((AutoPan *)ptr)->cos_table[i] =
-				cosf(i * M_PI / 512.0f);
 		return ptr;
 	}
 	
@@ -145,27 +144,29 @@ run_AutoPan(LADSPA_Handle Instance,
 	LADSPA_Data * input_R = ptr->input_R;
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
-	LADSPA_Data freq = *(ptr->freq);
-	LADSPA_Data depth = *(ptr->depth);
-	LADSPA_Data gain = db2lin(*(ptr->gain));
+	LADSPA_Data freq = LIMIT(*(ptr->freq),0.0f,20.0f);
+	LADSPA_Data depth = LIMIT(*(ptr->depth),0.0f,100.0f);
+	LADSPA_Data gain = db2lin(LIMIT(*(ptr->gain),-70.0f,20.0f));
 	unsigned long sample_index;
 	LADSPA_Data phase_L = 0;
 	LADSPA_Data phase_R = 0;
 	
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 		phase_L = 1024.0f * freq * sample_index / ptr->SampleRate + ptr->Phase;
-		while (phase_L > 1024.0f)
+		while (phase_L >= 1024.0f)
 		        phase_L -= 1024.0f;  
  		phase_R = phase_L + 512.0f;
-		while (phase_R > 1024.0f)
+		while (phase_R >= 1024.0f)
 		        phase_R -= 1024.0f;  
 
 		*(output_L++) = *(input_L++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_L]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_L]);
 		*(output_R++) = *(input_R++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_R]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_R]);
 	}
 	ptr->Phase = phase_L;
+	while (ptr->Phase >= 1024.0f)
+		ptr->Phase -= 1024.0f;
 }
 
 
@@ -192,27 +193,29 @@ run_adding_AutoPan(LADSPA_Handle Instance,
 	LADSPA_Data * input_R = ptr->input_R;
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
-	LADSPA_Data freq = *(ptr->freq);
-	LADSPA_Data depth = *(ptr->depth);
-	LADSPA_Data gain = db2lin(*(ptr->gain));
+	LADSPA_Data freq = LIMIT(*(ptr->freq),0.0f,20.0f);
+	LADSPA_Data depth = LIMIT(*(ptr->depth),0.0f,100.0f);
+	LADSPA_Data gain = db2lin(LIMIT(*(ptr->gain),-70.0f,20.0f));
 	unsigned long sample_index;
 	LADSPA_Data phase_L = 0;
 	LADSPA_Data phase_R = 0;
 	
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 		phase_L = 1024.0f * freq * sample_index / ptr->SampleRate + ptr->Phase;
-		while (phase_L > 1024.0f)
+		while (phase_L >= 1024.0f)
 		        phase_L -= 1024.0f;  
  		phase_R = phase_L + 512.0f;
-		while (phase_R > 1024.0f)
+		while (phase_R >= 1024.0f)
 		        phase_R -= 1024.0f;  
 
 		*(output_L++) += *(input_L++) * gain * ptr->run_adding_gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_L]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_L]);
 		*(output_R++) += *(input_R++) * gain * ptr->run_adding_gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * ptr->cos_table[(unsigned long) phase_R]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_R]);
 	}
 	ptr->Phase = phase_L;
+	while (ptr->Phase >= 1024.0f)
+		ptr->Phase -= 1024.0f;
 }
 
 
@@ -235,6 +238,7 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 void 
 _init() {
 	
+	int i;
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
 	LADSPA_PortRangeHint * port_range_hints;
@@ -243,6 +247,8 @@ _init() {
 	     (LADSPA_Descriptor *)malloc(sizeof(LADSPA_Descriptor))) == NULL)
 		exit(1);
 	
+	for (i = 0; i < 1024; i++)
+		cos_table[i] = cosf(i * M_PI / 512.0f);
 
 
 	mono_descriptor->UniqueID = ID_STEREO;

@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
     
-    $Id: tap_eq.c,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
+    $Id: tap_eq.c,v 1.3 2004/02/14 21:52:10 tszilagyi Exp $
 */
 
 
@@ -252,22 +252,22 @@ run_eq(LADSPA_Handle instance, unsigned long sample_count) {
 
 	eq * ptr = (eq *)instance;
 
-	const LADSPA_Data ch0f = *(ptr->ch0f);
-	const LADSPA_Data ch0g = *(ptr->ch0g);
-	const LADSPA_Data ch1f = *(ptr->ch1f);
-	const LADSPA_Data ch1g = *(ptr->ch1g);
-	const LADSPA_Data ch2f = *(ptr->ch2f);
-	const LADSPA_Data ch2g = *(ptr->ch2g);
-	const LADSPA_Data ch3f = *(ptr->ch3f);
-	const LADSPA_Data ch3g = *(ptr->ch3g);
-	const LADSPA_Data ch4f = *(ptr->ch4f);
-	const LADSPA_Data ch4g = *(ptr->ch4g);
-	const LADSPA_Data ch5f = *(ptr->ch5f);
-	const LADSPA_Data ch5g = *(ptr->ch5g);
-	const LADSPA_Data ch6f = *(ptr->ch6f);
-	const LADSPA_Data ch6g = *(ptr->ch6g);
-	const LADSPA_Data ch7f = *(ptr->ch7f);
-	const LADSPA_Data ch7g = *(ptr->ch7g);
+	const LADSPA_Data ch0f = LIMIT(*(ptr->ch0f),40.0f,280.0f);
+	const LADSPA_Data ch0g = LIMIT(*(ptr->ch0g),-50.0f,20.0f);
+	const LADSPA_Data ch1f = LIMIT(*(ptr->ch1f),100.0f,500.0f);
+	const LADSPA_Data ch1g = LIMIT(*(ptr->ch1g),-50.0f,20.0f);
+	const LADSPA_Data ch2f = LIMIT(*(ptr->ch2f),200.0f,1000.0f);
+	const LADSPA_Data ch2g = LIMIT(*(ptr->ch2g),-50.0f,20.0f);
+	const LADSPA_Data ch3f = LIMIT(*(ptr->ch3f),400.0f,2800.0f);
+	const LADSPA_Data ch3g = LIMIT(*(ptr->ch3g),-50.0f,20.0f);
+	const LADSPA_Data ch4f = LIMIT(*(ptr->ch4f),1000.0f,5000.0f);
+	const LADSPA_Data ch4g = LIMIT(*(ptr->ch4g),-50.0f,20.0f);
+	const LADSPA_Data ch5f = LIMIT(*(ptr->ch5f),3000.0f,9000.0f);
+	const LADSPA_Data ch5g = LIMIT(*(ptr->ch5g),-50.0f,20.0f);
+	const LADSPA_Data ch6f = LIMIT(*(ptr->ch6f),6000.0f,18000.0f);
+	const LADSPA_Data ch6g = LIMIT(*(ptr->ch6g),-50.0f,20.0f);
+	const LADSPA_Data ch7f = LIMIT(*(ptr->ch7f),10000.0f,20000.0f);
+	const LADSPA_Data ch7g = LIMIT(*(ptr->ch7g),-50.0f,20.0f);
 
 	const LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
@@ -368,22 +368,22 @@ run_adding_eq(LADSPA_Handle instance, unsigned long sample_count) {
 
 	eq * ptr = (eq *)instance;
 
-	const LADSPA_Data ch0f = *(ptr->ch0f);
-	const LADSPA_Data ch0g = *(ptr->ch0g);
-	const LADSPA_Data ch1f = *(ptr->ch1f);
-	const LADSPA_Data ch1g = *(ptr->ch1g);
-	const LADSPA_Data ch2f = *(ptr->ch2f);
-	const LADSPA_Data ch2g = *(ptr->ch2g);
-	const LADSPA_Data ch3f = *(ptr->ch3f);
-	const LADSPA_Data ch3g = *(ptr->ch3g);
-	const LADSPA_Data ch4f = *(ptr->ch4f);
-	const LADSPA_Data ch4g = *(ptr->ch4g);
-	const LADSPA_Data ch5f = *(ptr->ch5f);
-	const LADSPA_Data ch5g = *(ptr->ch5g);
-	const LADSPA_Data ch6f = *(ptr->ch6f);
-	const LADSPA_Data ch6g = *(ptr->ch6g);
-	const LADSPA_Data ch7f = *(ptr->ch7f);
-	const LADSPA_Data ch7g = *(ptr->ch7g);
+	const LADSPA_Data ch0f = LIMIT(*(ptr->ch0f),40.0f,280.0f);
+	const LADSPA_Data ch0g = LIMIT(*(ptr->ch0g),-50.0f,20.0f);
+	const LADSPA_Data ch1f = LIMIT(*(ptr->ch1f),100.0f,500.0f);
+	const LADSPA_Data ch1g = LIMIT(*(ptr->ch1g),-50.0f,20.0f);
+	const LADSPA_Data ch2f = LIMIT(*(ptr->ch2f),200.0f,1000.0f);
+	const LADSPA_Data ch2g = LIMIT(*(ptr->ch2g),-50.0f,20.0f);
+	const LADSPA_Data ch3f = LIMIT(*(ptr->ch3f),400.0f,2800.0f);
+	const LADSPA_Data ch3g = LIMIT(*(ptr->ch3g),-50.0f,20.0f);
+	const LADSPA_Data ch4f = LIMIT(*(ptr->ch4f),1000.0f,5000.0f);
+	const LADSPA_Data ch4g = LIMIT(*(ptr->ch4g),-50.0f,20.0f);
+	const LADSPA_Data ch5f = LIMIT(*(ptr->ch5f),3000.0f,9000.0f);
+	const LADSPA_Data ch5g = LIMIT(*(ptr->ch5g),-50.0f,20.0f);
+	const LADSPA_Data ch6f = LIMIT(*(ptr->ch6f),6000.0f,18000.0f);
+	const LADSPA_Data ch6g = LIMIT(*(ptr->ch6g),-50.0f,20.0f);
+	const LADSPA_Data ch7f = LIMIT(*(ptr->ch7f),10000.0f,20000.0f);
+	const LADSPA_Data ch7g = LIMIT(*(ptr->ch7g),-50.0f,20.0f);
 
 	const LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;

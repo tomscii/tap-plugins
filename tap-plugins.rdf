@@ -593,4 +593,92 @@
     </ladspa:hasSetting>
   </ladspa:DynamicsPlugin>
 
+  <ladspa:ModulatorPlugin rdf:about="&ladspa;2148">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP Vibrato</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2148.1" ladspa:hasLabel="frequency" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2148.2" ladspa:hasLabel="depth" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2148.3" ladspa:hasLabel="drylevel" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2148.4" ladspa:hasLabel="wetlevel" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2148.5" ladspa:hasLabel="latency" />
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2148.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2148.2" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="-90">
+            <ladspa:forPort rdf:resource="&ladspa;2148.3" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2148.4" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:ModulatorPlugin>
+
+  <ladspa:SimulatorPlugin rdf:about="&ladspa;2149">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP Rotary Speaker</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2149.1" ladspa:hasLabel="rotor_freq" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2149.2" ladspa:hasLabel="horn_freq" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2149.3" ladspa:hasLabel="mic_distance" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2149.4" ladspa:hasLabel="rotor_horn_mix" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2149.5" ladspa:hasLabel="latency" />
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2149.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2149.2" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0.25">
+            <ladspa:forPort rdf:resource="&ladspa;2149.3" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0.5">
+            <ladspa:forPort rdf:resource="&ladspa;2149.4" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:SimulatorPlugin>
+
 </rdf:RDF>

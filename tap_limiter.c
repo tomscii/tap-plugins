@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_limiter.c,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
+    $Id: tap_limiter.c,v 1.3 2004/02/14 21:52:10 tszilagyi Exp $
 */
 
 
@@ -69,58 +69,6 @@ typedef struct {
 	unsigned long sample_rate;
 	LADSPA_Data run_adding_gain;
 } Limiter;
-
-
-
-/* push a sample into a ringbuffer and return the sample falling out */
-LADSPA_Data
-push_buffer(LADSPA_Data insample, LADSPA_Data * buffer, 
-	    unsigned long buflen, unsigned long * pos) {
-	
-	LADSPA_Data outsample;
-
-	outsample = buffer[*pos];
-	buffer[(*pos)++] = insample;
-
-	if (*pos >= buflen)
-		*pos = 0;
-	
-	return outsample;
-}
-
-
-/* read a value from a ringbuffer.
- * n == 0 returns the oldest sample from the buffer.
- * n == buflen-1 returns the sample written to the buffer
- *      at the last push_buffer call.
- * n must not exceed buflen-1, or your computer will explode.
- */
-LADSPA_Data
-read_buffer(LADSPA_Data * buffer, unsigned long buflen,
-	    unsigned long pos, unsigned long n) {
-
-	while (n + pos >= buflen)
-		n -= buflen;
-	return buffer[n + pos];
-}
-
-
-
-
-/* overwrites a value in a ringbuffer, but pos stays the same.
- * n == 0 overwrites the oldest sample pushed in the buffer.
- * n == buflen-1 overwrites the sample written to the buffer
- *      at the last push_buffer call.
- * n must not exceed buflen-1, or your computer... you know.
- */
-void
-write_buffer(LADSPA_Data insample, LADSPA_Data * buffer, unsigned long buflen,
-	     unsigned long pos, unsigned long n) {
-
-	while (n + pos >= buflen)
-		n -= buflen;
-	buffer[n + pos] = insample;
-}
 
 
 
@@ -206,8 +154,8 @@ run_Limiter(LADSPA_Handle Instance,
 
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
-	LADSPA_Data limit_vol = db2lin(*(ptr->limit_vol));
-	LADSPA_Data out_vol = db2lin(*(ptr->out_vol));
+	LADSPA_Data limit_vol = db2lin(LIMIT(*(ptr->limit_vol),-30.0f,20.0f));
+	LADSPA_Data out_vol = db2lin(LIMIT(*(ptr->out_vol),-30.0f,20.0f));
 	unsigned long sample_index;
 	unsigned long sample_count = SampleCount;
 	unsigned long index_offs = 0;
@@ -292,8 +240,8 @@ run_adding_Limiter(LADSPA_Handle Instance,
 
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
-	LADSPA_Data limit_vol = db2lin(*(ptr->limit_vol));
-	LADSPA_Data out_vol = db2lin(*(ptr->out_vol));
+	LADSPA_Data limit_vol = db2lin(LIMIT(*(ptr->limit_vol),-30.0f,20.0f));
+	LADSPA_Data out_vol = db2lin(LIMIT(*(ptr->out_vol),-30.0f,20.0f));
 	unsigned long sample_index;
 	unsigned long sample_count = SampleCount;
 	unsigned long index_offs = 0;

@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.3 2004/02/14 21:52:10 tszilagyi Exp $
 */
 
 
@@ -37,7 +37,7 @@ load_plugin_data(LADSPA_Handle Instance) {
 	unsigned long m;
 	int i;
 
-	m = *(ptr->mode);
+	m = LIMIT(*(ptr->mode),0,NUM_MODES-1);
 
 	/* load combs data */
 	ptr->num_combs = 2 * reverb_data[m].num_combs;
@@ -56,10 +56,10 @@ load_plugin_data(LADSPA_Handle Instance) {
 		((COMB_FILTER *)(ptr->combs + 2*i+1))->feedback = 
 			((COMB_FILTER *)(ptr->combs + 2*i))->freq_resp;
 
-
 		/* set initial values: */
 		*(((COMB_FILTER *)(ptr->combs + 2*i))->buffer_pos) = 0;
 		*(((COMB_FILTER *)(ptr->combs + 2*i+1))->buffer_pos) = 0;
+
 		eq_set_params(((COMB_FILTER *)(ptr->combs + 2*i))->filter,
 			      10000.0f,
 			      reverb_data[m].combs[i].freq_resp * -60.0f,
@@ -99,24 +99,6 @@ load_plugin_data(LADSPA_Handle Instance) {
 		      BANDPASS_BWIDTH, ptr->sample_rate);
 }
 
-
-
-
-/* push a sample into a ringbuffer and return the sample falling out */
-LADSPA_Data
-push_buffer(LADSPA_Data insample, LADSPA_Data * buffer, 
-	    unsigned long buflen, unsigned long * pos) {
-	
-	LADSPA_Data outsample;
-
-	outsample = buffer[*pos];
-	buffer[(*pos)++] = insample;
-
-	if (*pos >= buflen)
-		*pos = 0;
-	
-	return outsample;
-}
 
 
 /* push a sample into a comb filter and return the sample falling out */
@@ -228,14 +210,55 @@ LADSPA_Handle
 instantiate_Reverb(const LADSPA_Descriptor * Descriptor,
 		   unsigned long             SampleRate) {
 	
-	LADSPA_Handle * ptr;
+	int i;
+	LADSPA_Handle * p;
+	Reverb * ptr = NULL;
 	
-	if ((ptr = malloc(sizeof(Reverb))) != NULL) {
-		((Reverb *)ptr)->sample_rate = SampleRate;
-		((Reverb *)ptr)->run_adding_gain = 1.0f;
-		return ptr;
+	if ((p = malloc(sizeof(Reverb))) != NULL) {
+		((Reverb *)p)->sample_rate = SampleRate;
+		((Reverb *)p)->run_adding_gain = 1.0f;
+
+		ptr = (Reverb *)p;
+
+		/* allocate memory for comb/allpass filters and other dynamic vars */
+		if ((ptr->combs =
+		     calloc(2 * MAX_COMBS, sizeof(COMB_FILTER))) == NULL)
+			return NULL;
+		for (i = 0; i < 2 * MAX_COMBS; i++) {
+			if ((((COMB_FILTER *)(ptr->combs + i))->ringbuffer =
+			     calloc(MAX_COMB_DELAY * ptr->sample_rate / 1000,
+				    sizeof(LADSPA_Data))) == NULL)
+				return NULL;
+			if ((((COMB_FILTER *)(ptr->combs + i))->buffer_pos =
+			     calloc(1, sizeof(unsigned long))) == NULL)
+				return NULL;
+			if ((((COMB_FILTER *)(ptr->combs + i))->filter =
+			     calloc(1, sizeof(biquad))) == NULL)
+				return NULL;
+		}
+
+		if ((ptr->allps =
+		     calloc(2 * MAX_ALLPS, sizeof(ALLP_FILTER))) == NULL)
+			return NULL;
+		for (i = 0; i < 2 * MAX_ALLPS; i++) {
+			if ((((ALLP_FILTER *)(ptr->allps + i))->ringbuffer =
+			     calloc(MAX_ALLP_DELAY * ptr->sample_rate / 1000,
+				    sizeof(LADSPA_Data))) == NULL)
+				return NULL;
+			if ((((ALLP_FILTER *)(ptr->allps + i))->buffer_pos =
+			     calloc(1, sizeof(unsigned long))) == NULL)
+				return NULL;
+		}
+		
+		if ((ptr->low_pass =
+		     calloc(2, sizeof(biquad))) == NULL)
+			return NULL;
+		if ((ptr->high_pass =
+		     calloc(2, sizeof(biquad))) == NULL)
+			return NULL;
+		
+		return p;
 	}
-	
 	return NULL;
 }
 
@@ -245,71 +268,29 @@ void
 activate_Reverb(LADSPA_Handle Instance) {
 
 	Reverb * ptr = (Reverb *)Instance;
-	int i;
+	int i,j;
 
-	/* allocate memory for comb/allpass filters and other dynamic vars */
-
-	if ((ptr->combs = calloc(2 * MAX_COMBS, sizeof(COMB_FILTER))) == NULL)
-		exit(1);
 	for (i = 0; i < 2 * MAX_COMBS; i++) {
-		if ((((COMB_FILTER *)(ptr->combs + i))->ringbuffer =
-		     calloc(MAX_COMB_DELAY * ptr->sample_rate / 1000,
-			    sizeof(LADSPA_Data))) == NULL)
-			exit(1);
-		if ((((COMB_FILTER *)(ptr->combs + i))->buffer_pos =
-		     calloc(1, sizeof(unsigned long))) == NULL)
-			exit(1);
-		if ((((COMB_FILTER *)(ptr->combs + i))->filter =
-		     calloc(1, sizeof(biquad))) == NULL)
-			exit(1);
+		for (j = 0; j < MAX_COMB_DELAY * ptr->sample_rate / 1000; j++)
+			((COMB_FILTER *)(ptr->combs + i))->ringbuffer[j] = 0.0f;
+		*(((COMB_FILTER *)(ptr->combs + i))->buffer_pos) = 0;
+		biquad_init(((COMB_FILTER *)(ptr->combs + i))->filter);
 	}
 
-	if ((ptr->allps = calloc(2 * MAX_ALLPS, sizeof(ALLP_FILTER))) == NULL)
-		exit(1);
-	for (i = 0; i < 2* MAX_ALLPS; i++) {
-		if ((((ALLP_FILTER *)(ptr->allps + i))->ringbuffer =
-		     calloc(MAX_ALLP_DELAY * ptr->sample_rate / 1000,
-			    sizeof(LADSPA_Data))) == NULL)
-			exit(1);
-		if ((((ALLP_FILTER *)(ptr->allps + i))->buffer_pos =
-		     calloc(1, sizeof(unsigned long))) == NULL)
-			exit(1);
-	}
-
-	if ((ptr->low_pass = calloc(2, sizeof(biquad))) == NULL)
-		exit(1);
-	if ((ptr->high_pass = calloc(2, sizeof(biquad))) == NULL)
-		exit(1);
-
-	load_plugin_data(Instance);
-	comp_coeffs(Instance);
-}
-
-
-/* deactivate a plugin instance */
-void
-deactivate_Reverb(LADSPA_Handle Instance) {
-
-	Reverb * ptr = (Reverb *)Instance;
-	int i;
-
-	/* free memory allocated for comb/allpass filters & co. in activate_Reverb() */
-	
-	for (i = 0; i < 2 * MAX_COMBS; i++) {
-		free(((COMB_FILTER *)(ptr->combs + i))->ringbuffer);
-		free(((COMB_FILTER *)(ptr->combs + i))->buffer_pos);
-		free(((COMB_FILTER *)(ptr->combs + i))->filter);
-	}
 	for (i = 0; i < 2 * MAX_ALLPS; i++) {
-		free(((ALLP_FILTER *)(ptr->allps + i))->ringbuffer);
-		free(((ALLP_FILTER *)(ptr->allps + i))->buffer_pos);
+		for (j = 0; j < MAX_ALLP_DELAY * ptr->sample_rate / 1000; j++)
+			((ALLP_FILTER *)(ptr->allps + i))->ringbuffer[j] = 0.0f;
+		*(((ALLP_FILTER *)(ptr->allps + i))->buffer_pos) = 0;
 	}
 
-	free(ptr->combs);
-	free(ptr->allps);
-	free(ptr->low_pass);
-	free(ptr->high_pass);
+	biquad_init(ptr->low_pass);
+	biquad_init(ptr->high_pass);
+
+	ptr->old_decay = -10.0f;
+	ptr->old_stereo_enh = -10.0f;
+	ptr->old_mode = -10.0f;
 }
+
 
 
 /* Connect a port to a data location. */
@@ -318,9 +299,8 @@ connect_port_Reverb(LADSPA_Handle Instance,
 		    unsigned long Port,
 		    LADSPA_Data * DataLocation) {
 	
-	Reverb * ptr;
-	
-	ptr = (Reverb *)Instance;
+	Reverb * ptr = (Reverb *)Instance;
+
 	switch (Port) {
 	case DECAY:
 		ptr->decay = DataLocation;
@@ -372,14 +352,14 @@ run_Reverb(LADSPA_Handle Instance,
 	unsigned long sample_index;
 	int i;
 
-	LADSPA_Data decay = *(ptr->decay);
-	LADSPA_Data drylevel = db2lin(*(ptr->drylevel));
-	LADSPA_Data wetlevel = db2lin(*(ptr->wetlevel));
-	LADSPA_Data combs_en = *(ptr->combs_en);
-	LADSPA_Data allps_en = *(ptr->allps_en);
-	LADSPA_Data bandpass_en = *(ptr->bandpass_en);
-	LADSPA_Data stereo_enh = *(ptr->stereo_enh);
-      	LADSPA_Data mode = *(ptr->mode);
+	LADSPA_Data decay = LIMIT(*(ptr->decay),0.0f,10000.0f);
+	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-70.0f,10.0f));
+	LADSPA_Data wetlevel = db2lin(LIMIT(*(ptr->wetlevel),-70.0f,10.0f));
+	LADSPA_Data combs_en = LIMIT(*(ptr->combs_en),-2.0f,2.0f);
+	LADSPA_Data allps_en = LIMIT(*(ptr->allps_en),-2.0f,2.0f);
+	LADSPA_Data bandpass_en = LIMIT(*(ptr->bandpass_en),-2.0f,2.0f);
+	LADSPA_Data stereo_enh = LIMIT(*(ptr->stereo_enh),-2.0f,2.0f);
+      	LADSPA_Data mode = LIMIT(*(ptr->mode),0,NUM_MODES-1);
 
 	LADSPA_Data * input_L = ptr->input_L;
 	LADSPA_Data * output_L = ptr->output_L;
@@ -480,14 +460,14 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 	unsigned long sample_index;
 	int i;
 
-	LADSPA_Data decay = *(ptr->decay);
-	LADSPA_Data drylevel = db2lin(*(ptr->drylevel));
-	LADSPA_Data wetlevel = db2lin(*(ptr->wetlevel));
-	LADSPA_Data combs_en = *(ptr->combs_en);
-	LADSPA_Data allps_en = *(ptr->allps_en);
-	LADSPA_Data bandpass_en = *(ptr->bandpass_en);
-	LADSPA_Data stereo_enh = *(ptr->stereo_enh);
-      	LADSPA_Data mode = *(ptr->mode);
+	LADSPA_Data decay = LIMIT(*(ptr->decay),0.0f,10000.0f);
+	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-70.0f,10.0f));
+	LADSPA_Data wetlevel = db2lin(LIMIT(*(ptr->wetlevel),-70.0f,10.0f));
+	LADSPA_Data combs_en = LIMIT(*(ptr->combs_en),-2.0f,2.0f);
+	LADSPA_Data allps_en = LIMIT(*(ptr->allps_en),-2.0f,2.0f);
+	LADSPA_Data bandpass_en = LIMIT(*(ptr->bandpass_en),-2.0f,2.0f);
+	LADSPA_Data stereo_enh = LIMIT(*(ptr->stereo_enh),-2.0f,2.0f);
+      	LADSPA_Data mode = LIMIT(*(ptr->mode),0,NUM_MODES-1);
 
 	LADSPA_Data * input_L = ptr->input_L;
 	LADSPA_Data * output_L = ptr->output_L;
@@ -570,7 +550,27 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 void 
 cleanup_Reverb(LADSPA_Handle Instance) {
 
+	int i;
+	Reverb * ptr = (Reverb *)Instance;
+
+	/* free memory allocated for comb/allpass filters & co. in instantiate_Reverb() */
+	for (i = 0; i < 2 * MAX_COMBS; i++) {
+		free(((COMB_FILTER *)(ptr->combs + i))->ringbuffer);
+		free(((COMB_FILTER *)(ptr->combs + i))->buffer_pos);
+		free(((COMB_FILTER *)(ptr->combs + i))->filter);
+	}
+	for (i = 0; i < 2 * MAX_ALLPS; i++) {
+		free(((ALLP_FILTER *)(ptr->allps + i))->ringbuffer);
+		free(((ALLP_FILTER *)(ptr->allps + i))->buffer_pos);
+	}
+
+	free(ptr->combs);
+	free(ptr->allps);
+	free(ptr->low_pass);
+	free(ptr->high_pass);
+
 	free(Instance);
+
 }
 
 
@@ -726,7 +726,7 @@ _init() {
 	stereo_descriptor->run = run_Reverb;
 	stereo_descriptor->run_adding = run_adding_gain_Reverb;
 	stereo_descriptor->set_run_adding_gain = set_run_adding_gain;
-	stereo_descriptor->deactivate = deactivate_Reverb;
+	stereo_descriptor->deactivate = NULL;
 	stereo_descriptor->cleanup = cleanup_Reverb;
 	
 }

@@ -1,10 +1,11 @@
 The author would like to thank the following people for their help,
-support, comments, suggestions, patches etc. In no particular order.
+support, comments, suggestions, patches etc.
 
 If you discover yourself in the following list and would like to
 remain nameless instead, please write to the author. You will be
 removed instantly.
 
+In no particular order:
 
 
 Anand Kumria <akumria@debian.org> constantly maintains a Debian
@@ -21,10 +22,17 @@ that became the base of the solution.
 Forrest Cook <cook@lwn.net> suggested implementing an AutoPanner as a
 new TAP-plugin.
 
+Nick Lamb <njl98r@ecs.soton.ac.uk> suggested using his Demolition
+[http://www.ecs.soton.ac.uk/~njl98r/code/ladspa/] program to
+sanity-check the TAP-plugins. Demolition proved essential, a must for
+every LADSPA plugin developer. It revealed bugs and LADSPA
+non-conformancies too many to mention in the TAP-plugins code, which
+could be fixed right away.
 
 
-And, of course, special thanks to the Ardour [http://ardour.org]
-development team for their tireless efforts in creating *the* Linux
-audio engineering platform (and the recommended host for these
-plugins). TAP-plugins aims to be a very small contribution to this
-effort.
+
+And, of course, special thanks to the Ardour [http://ardour.org] and
+JACK [http://jackit.sf.net] development teams for their tireless
+efforts in creating *the* Linux audio engineering platform (and
+besides that, the recommended host for these plugins). TAP-plugins
+aims to be a very small contribution to this effort.

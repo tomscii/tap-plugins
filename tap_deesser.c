@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_deesser.c,v 1.1 2004/02/04 15:35:49 tszilagyi Exp $
+    $Id: tap_deesser.c,v 1.2 2004/02/14 21:52:10 tszilagyi Exp $
 */
 
 
@@ -54,8 +54,6 @@
 #define RINGBUF_SIZE    2000
 
 
-#define ABS(x)  (x)>0.0f?(x):-1.0f*(x)
-
 
 /* 4 digits precision from 1.000 to 9.999 */
 LADSPA_Data log10_table[9000];
@@ -93,8 +91,11 @@ LADSPA_Data fast_lin2db(LADSPA_Data lin) {
         int exp = 0;
         LADSPA_Data mant = ABS(lin);
 
+	/* sanity checks */
 	if (mant == 0.0f)
 		return(-1.0f/0.0f); /* -inf */
+	if (mant == 1.0f/0.0f) /* +inf */
+		return(mant);
 
         while (mant < 1.0f) {
                 mant *= 10;
@@ -107,25 +108,6 @@ LADSPA_Data fast_lin2db(LADSPA_Data lin) {
 
         k = (mant - 0.999999f) * 1000.0f;
         return 20.0f * (log10_table[k] + exp);
-}
-
-
-
-
-/* push a sample into a ringbuffer and return the sample falling out */
-LADSPA_Data
-push_buffer(LADSPA_Data insample, LADSPA_Data * buffer, 
-	    unsigned long buflen, unsigned long * pos) {
-	
-	LADSPA_Data outsample;
-
-	outsample = buffer[*pos];
-	buffer[(*pos)++] = insample;
-
-	if (*pos >= buflen)
-		*pos = 0;
-	
-	return outsample;
 }
 
 
@@ -221,10 +203,10 @@ run_DeEsser(LADSPA_Handle Instance,
 
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
-	LADSPA_Data threshold = *(ptr->threshold);
-	LADSPA_Data freq = *(ptr->freq);
-	LADSPA_Data sidechain = *(ptr->sidechain);
-	LADSPA_Data monitor = *(ptr->monitor);
+	LADSPA_Data threshold = LIMIT(*(ptr->threshold),-50.0f,10.0f);
+	LADSPA_Data freq = LIMIT(*(ptr->freq),2000.0f,16000.0f);
+	LADSPA_Data sidechain = LIMIT(*(ptr->sidechain),0.0f,1.0f);
+	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,0.0f);
 	unsigned long sample_index;
 
 	LADSPA_Data in = 0;
@@ -295,10 +277,10 @@ run_adding_DeEsser(LADSPA_Handle Instance,
 
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
-	LADSPA_Data threshold = *(ptr->threshold);
-	LADSPA_Data freq = *(ptr->freq);
-	LADSPA_Data sidechain = *(ptr->sidechain);
-	LADSPA_Data monitor = *(ptr->monitor);
+	LADSPA_Data threshold = LIMIT(*(ptr->threshold),-50.0f,10.0f);
+	LADSPA_Data freq = LIMIT(*(ptr->freq),2000.0f,16000.0f);
+	LADSPA_Data sidechain = LIMIT(*(ptr->sidechain),0.0f,1.0f);
+	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,0.0f);
 	unsigned long sample_index;
 
 	LADSPA_Data in = 0;

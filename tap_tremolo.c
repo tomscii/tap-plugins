@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_tremolo.c,v 1.3 2004/02/07 22:03:37 tszilagyi Exp $
+    $Id: tap_tremolo.c,v 1.4 2004/02/14 21:52:10 tszilagyi Exp $
 */
 
 
@@ -138,20 +138,22 @@ run_Tremolo(LADSPA_Handle Instance,
 	
 	input = ptr->InputBuffer_1;
 	output = ptr->OutputBuffer_1;
-	freq = *(ptr->Control_Freq);
-	depth = *(ptr->Control_Depth);
-	gain = db2lin(*(ptr->Control_Gain));
+	freq = LIMIT(*(ptr->Control_Freq),0.0f,20.0f);
+	depth = LIMIT(*(ptr->Control_Depth),0.0f,100.0f);
+	gain = db2lin(LIMIT(*(ptr->Control_Gain),-70.0f,20.0f));
 
   	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 		phase = 1024.0f * freq * sample_index / ptr->SampleRate + ptr->Phase;
 
-		while (phase >= 1024)
-			phase -= 1024;
+		while (phase >= 1024.0f)
+			phase -= 1024.0f;
 
 		*(output++) = *(input++) * gain *
 			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase]);
 	}
 	ptr->Phase = phase;
+	while (ptr->Phase >= 1024.0f)
+		ptr->Phase -= 1024.0f;
 }
 
 
@@ -185,20 +187,22 @@ run_adding_Tremolo(LADSPA_Handle Instance,
 	
 	input = ptr->InputBuffer_1;
 	output = ptr->OutputBuffer_1;
-	freq = *(ptr->Control_Freq);
-	depth = *(ptr->Control_Depth);
-	gain = db2lin(*(ptr->Control_Gain));
+	freq = LIMIT(*(ptr->Control_Freq),0.0f,20.0f);
+	depth = LIMIT(*(ptr->Control_Depth),0.0f,100.0f);
+	gain = db2lin(LIMIT(*(ptr->Control_Gain),-70.0f,20.0f));
 
   	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 		phase = 1024.0f * freq * sample_index / ptr->SampleRate + ptr->Phase;
 
-		while (phase >= 1024)
-			phase -= 1024;
+		while (phase >= 1024.0f)
+			phase -= 1024.0f;
 
 		*(output++) += *(input++) * ptr->run_adding_gain * gain *
 			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase]);
 	}
 	ptr->Phase = phase;
+	while (ptr->Phase >= 1024.0f)
+		ptr->Phase -= 1024.0f;
 }
 
 

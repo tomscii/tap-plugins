@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_echo.c,v 1.2 2004/02/04 15:35:49 tszilagyi Exp $
+    $Id: tap_echo.c,v 1.3 2004/02/14 21:52:10 tszilagyi Exp $
 */
 
 
@@ -90,23 +90,6 @@ typedef struct {
 	LADSPA_Data run_adding_gain;
 } Echo;
 
-
-
-/* push a sample into a ringbuffer and return the sample falling out */
-LADSPA_Data
-push_buffer(LADSPA_Data insample, LADSPA_Data * buffer, 
-	    unsigned long buflen, unsigned long * pos) {
-
-	LADSPA_Data outsample;
-
-	outsample = buffer[*pos];
-	buffer[(*pos)++] = insample;
-
-	if (*pos >= buflen)
-		*pos = 0;
-	
-	return outsample;
-}
 
 
 
@@ -264,16 +247,16 @@ run_Echo(LADSPA_Handle Instance,
 
 	ptr = (Echo *)Instance;
 
-	delaytime_L = *(ptr->delaytime_L);
-	delaytime_R = *(ptr->delaytime_R);
-	feedback_L = *(ptr->feedback_L) / 100.0;
-	feedback_R = *(ptr->feedback_R) / 100.0;
-        strength_L = db2lin(*(ptr->strength_L));
-	strength_R = db2lin(*(ptr->strength_R));
-	drylevel = db2lin(*(ptr->drylevel));
-	mode = *(ptr->mode);
-	haas = *(ptr->haas);
-	rev_outch = *(ptr->rev_outch);
+	delaytime_L = LIMIT(*(ptr->delaytime_L),0.0f,2000.0f);
+	delaytime_R = LIMIT(*(ptr->delaytime_R),0.0f,2000.0f);
+	feedback_L = LIMIT(*(ptr->feedback_L) / 100.0, 0.0f, 100.0f);
+	feedback_R = LIMIT(*(ptr->feedback_R) / 100.0, 0.0f, 100.0f);
+        strength_L = db2lin(LIMIT(*(ptr->strength_L),-70.0f,10.0f));
+	strength_R = db2lin(LIMIT(*(ptr->strength_R),-70.0f,10.0f));
+	drylevel = db2lin(LIMIT(*(ptr->drylevel),-70.0f,10.0f));
+	mode = LIMIT(*(ptr->mode),-2.0f,2.0f);
+	haas = LIMIT(*(ptr->haas),-2.0f,2.0f);
+	rev_outch = LIMIT(*(ptr->rev_outch),-2.0f,2.0f);
 
       	input_L = ptr->input_L;
 	output_L = ptr->output_L;
@@ -371,16 +354,16 @@ run_adding_gain_Echo(LADSPA_Handle Instance,
 
 	ptr = (Echo *)Instance;
 
-	delaytime_L = *(ptr->delaytime_L);
-	delaytime_R = *(ptr->delaytime_R);
-	feedback_L = *(ptr->feedback_L) / 100.0;
-	feedback_R = *(ptr->feedback_R) / 100.0;
-        strength_L = db2lin(*(ptr->strength_L));
-	strength_R = db2lin(*(ptr->strength_R));
-	drylevel = db2lin(*(ptr->drylevel));
-	mode = *(ptr->mode);
-	haas = *(ptr->haas);
-	rev_outch = *(ptr->rev_outch);
+	delaytime_L = LIMIT(*(ptr->delaytime_L),0.0f,2000.0f);
+	delaytime_R = LIMIT(*(ptr->delaytime_R),0.0f,2000.0f);
+	feedback_L = LIMIT(*(ptr->feedback_L) / 100.0, 0.0f, 100.0f);
+	feedback_R = LIMIT(*(ptr->feedback_R) / 100.0, 0.0f, 100.0f);
+        strength_L = db2lin(LIMIT(*(ptr->strength_L),-70.0f,10.0f));
+	strength_R = db2lin(LIMIT(*(ptr->strength_R),-70.0f,10.0f));
+	drylevel = db2lin(LIMIT(*(ptr->drylevel),-70.0f,10.0f));
+	mode = LIMIT(*(ptr->mode),-2.0f,2.0f);
+	haas = LIMIT(*(ptr->haas),-2.0f,2.0f);
+	rev_outch = LIMIT(*(ptr->rev_outch),-2.0f,2.0f);
 
       	input_L = ptr->input_L;
 	output_L = ptr->output_L;
