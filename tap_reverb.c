@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.5 2004/02/21 17:33:36 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.6 2004/03/03 12:42:55 tszilagyi Exp $
 */
 
 
@@ -36,6 +36,7 @@ load_plugin_data(LADSPA_Handle Instance) {
 	Reverb * ptr = (Reverb *)Instance;
 	unsigned long m;
 	int i;
+
 
 	m = LIMIT(*(ptr->mode),0,NUM_MODES-1);
 
@@ -137,6 +138,7 @@ comp_coeffs(LADSPA_Handle Instance) {
 	Reverb * ptr = (Reverb *)Instance;
 	int i;
 	
+
 	if (*(ptr->mode) != ptr->old_mode)
 		load_plugin_data(Instance);
 
@@ -210,7 +212,7 @@ LADSPA_Handle
 instantiate_Reverb(const LADSPA_Descriptor * Descriptor,
 		   unsigned long             SampleRate) {
 	
-	int i;
+	unsigned long i;
 	LADSPA_Handle * p;
 	Reverb * ptr = NULL;
 	
@@ -226,7 +228,7 @@ instantiate_Reverb(const LADSPA_Descriptor * Descriptor,
 			return NULL;
 		for (i = 0; i < 2 * MAX_COMBS; i++) {
 			if ((((COMB_FILTER *)(ptr->combs + i))->ringbuffer =
-			     calloc(MAX_COMB_DELAY * ptr->sample_rate / 1000,
+			     calloc((unsigned long)MAX_COMB_DELAY * ptr->sample_rate / 1000,
 				    sizeof(LADSPA_Data))) == NULL)
 				return NULL;
 			if ((((COMB_FILTER *)(ptr->combs + i))->buffer_pos =
@@ -242,7 +244,7 @@ instantiate_Reverb(const LADSPA_Descriptor * Descriptor,
 			return NULL;
 		for (i = 0; i < 2 * MAX_ALLPS; i++) {
 			if ((((ALLP_FILTER *)(ptr->allps + i))->ringbuffer =
-			     calloc(MAX_ALLP_DELAY * ptr->sample_rate / 1000,
+			     calloc((unsigned long)MAX_ALLP_DELAY * ptr->sample_rate / 1000,
 				    sizeof(LADSPA_Data))) == NULL)
 				return NULL;
 			if ((((ALLP_FILTER *)(ptr->allps + i))->buffer_pos =
@@ -268,23 +270,25 @@ void
 activate_Reverb(LADSPA_Handle Instance) {
 
 	Reverb * ptr = (Reverb *)Instance;
-	int i,j;
+	unsigned long i,j;
 
 	for (i = 0; i < 2 * MAX_COMBS; i++) {
-		for (j = 0; j < MAX_COMB_DELAY * ptr->sample_rate / 1000; j++)
-			((COMB_FILTER *)(ptr->combs + i))->ringbuffer[j] = 0.0f;
+		for (j = 0; j < (unsigned long)MAX_COMB_DELAY * ptr->sample_rate / 1000; j++)
+		        ((COMB_FILTER *)(ptr->combs + i))->ringbuffer[j] = 0.0f;
 		*(((COMB_FILTER *)(ptr->combs + i))->buffer_pos) = 0;
 		biquad_init(((COMB_FILTER *)(ptr->combs + i))->filter);
 	}
 
 	for (i = 0; i < 2 * MAX_ALLPS; i++) {
-		for (j = 0; j < MAX_ALLP_DELAY * ptr->sample_rate / 1000; j++)
+		for (j = 0; j < (unsigned long)MAX_ALLP_DELAY * ptr->sample_rate / 1000; j++)
 			((ALLP_FILTER *)(ptr->allps + i))->ringbuffer[j] = 0.0f;
 		*(((ALLP_FILTER *)(ptr->allps + i))->buffer_pos) = 0;
 	}
 
 	biquad_init(ptr->low_pass);
+	biquad_init((biquad *)(ptr->low_pass + 1));
 	biquad_init(ptr->high_pass);
+	biquad_init((biquad *)(ptr->high_pass + 1));
 
 	ptr->old_decay = -10.0f;
 	ptr->old_stereo_enh = -10.0f;
