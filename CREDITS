@@ -32,6 +32,12 @@ Linium <intent@netpratique.fr> discovered a bug in EQ and EQ-BW:
 the plugins reinitialized themselves on each transport stop, which
 resulted in the effect disappearing after every STOP->PLAY.
 
+As a main Ardour developer, Taybin Rutkin <taybin@earthlink.net>
+implemented using RDF metadata to generate drop-down lists in LADSPA
+plugin GUIs in Ardour. This made it much easier to create good-looking
+and easy to use plugins; in particular TAP Reverberator and TAP
+Dynamics are among the "big winners".
+
 
 And, of course, special thanks to the Ardour [http://ardour.org] and
 JACK [http://jackit.sf.net] development teams for their tireless

@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_deesser.c,v 1.6 2004/04/24 16:54:10 tszilagyi Exp $
+    $Id: tap_deesser.c,v 1.7 2004/05/01 16:15:06 tszilagyi Exp $
 */
 
 
@@ -182,7 +182,7 @@ connect_port_DeEsser(LADSPA_Handle Instance,
 		break;
 	case ATTENUAT:
 		ptr->attenuat = DataLocation;
-		*(ptr->attenuat) = 0.0f; /* IS THIS LEGAL? */
+		*(ptr->attenuat) = 0.0f;
 		break;
 	case INPUT:
 		ptr->input = DataLocation;

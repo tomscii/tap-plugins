@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.8 2004/03/03 15:47:49 tszilagyi Exp $
+#   $Id: Makefile,v 1.9 2004/05/01 16:15:06 tszilagyi Exp $
 
 
 #####################################################################
@@ -38,6 +38,8 @@ CC		=	gcc
 
 PLUGINS		=	tap_autopan.so \
 			tap_deesser.so \
+			tap_dynamics_m.so \
+			tap_dynamics_st.so \
 			tap_eq.so \
 			tap_eqbw.so \
 			tap_pitch.so \
@@ -95,6 +97,14 @@ tap_rotspeak.so: tap_rotspeak.c tap_utils.h ladspa.h
 tap_pitch.so: tap_pitch.c tap_utils.h ladspa.h
 	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_pitch.c -o tap_pitch.o
 	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_pitch.so tap_pitch.o
+
+tap_dynamics_m.so: tap_dynamics_m.c tap_dynamics_presets.h tap_utils.h ladspa.h
+	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_dynamics_m.c -o tap_dynamics_m.o
+	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_dynamics_m.so tap_dynamics_m.o
+
+tap_dynamics_st.so: tap_dynamics_st.c tap_dynamics_presets.h tap_utils.h ladspa.h
+	$(CC) -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC tap_dynamics_st.c -o tap_dynamics_st.o
+	$(CC) -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt -o tap_dynamics_st.so tap_dynamics_st.o
 
 
 # OTHER TARGETS

@@ -926,4 +926,272 @@
     </ladspa:hasSetting>
   </ladspa:EQPlugin>
 
+  <ladspa:DynamicsPlugin rdf:about="&ladspa;2152">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP Dynamics (M)</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2152.0" ladspa:hasLabel="attack" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2152.1" ladspa:hasLabel="release" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2152.2" ladspa:hasLabel="offset_gain" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2152.3" ladspa:hasLabel="makeup_gain" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2152.4" ladspa:hasLabel="envelope_vol" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2152.5" ladspa:hasLabel="gain_adjustment" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2152.6" ladspa:hasLabel="function">
+        <ladspa:hasScale>
+          <ladspa:Scale>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="0" ladspa:hasLabel="2:1 comp at -6 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="1" ladspa:hasLabel="2:1 comp at -9 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="2" ladspa:hasLabel="2:1 comp at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="3" ladspa:hasLabel="2:1 comp at -18 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="4" ladspa:hasLabel="2.5:1 comp at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="5" ladspa:hasLabel="3:1 comp at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="6" ladspa:hasLabel="3:1 comp at -15 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="7" ladspa:hasLabel="Compressor/Gate" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="8" ladspa:hasLabel="Expander" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="9" ladspa:hasLabel="Hard limiter at -6 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="10" ladspa:hasLabel="Hard limiter at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="11" ladspa:hasLabel="Hard gate at -35 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="12" ladspa:hasLabel="Soft limiter" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="13" ladspa:hasLabel="Soft knee comp/gate" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="14" ladspa:hasLabel="Soft gate below -36 dB" />
+            </ladspa:hasPoint>
+          </ladspa:Scale>
+        </ladspa:hasScale>
+      </ladspa:InputControlPort>
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="128">
+            <ladspa:forPort rdf:resource="&ladspa;2152.0" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="502">
+            <ladspa:forPort rdf:resource="&ladspa;2152.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2152.2" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2152.3" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="-60">
+            <ladspa:forPort rdf:resource="&ladspa;2152.4" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2152.5" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2152.6" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:DynamicsPlugin>
+
+  <ladspa:DynamicsPlugin rdf:about="&ladspa;2153">
+    <dc:creator>Tom Szilagyi</dc:creator>
+    <dc:title>TAP Dynamics (St)</dc:title>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2153.0" ladspa:hasLabel="attack" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2153.1" ladspa:hasLabel="release" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2153.2" ladspa:hasLabel="offset_gain" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2153.3" ladspa:hasLabel="makeup_gain" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2153.4" ladspa:hasLabel="envelope_vol_L" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2153.5" ladspa:hasLabel="envelope_vol_R" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2153.6" ladspa:hasLabel="gain_adjustment_L" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:OutputControlPort rdf:about="&ladspa;2153.7" ladspa:hasLabel="gain_adjustment_R" />
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2153.8" ladspa:hasLabel="stereo_mode">
+        <ladspa:hasScale>
+          <ladspa:Scale>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="0" ladspa:hasLabel="Independent" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="1" ladspa:hasLabel="Average" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="2" ladspa:hasLabel="Peak" />
+            </ladspa:hasPoint>
+          </ladspa:Scale>
+        </ladspa:hasScale>
+      </ladspa:InputControlPort>
+    </ladspa:hasPort>
+    <ladspa:hasPort>
+      <ladspa:InputControlPort rdf:about="&ladspa;2153.9" ladspa:hasLabel="function">
+        <ladspa:hasScale>
+          <ladspa:Scale>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="0" ladspa:hasLabel="2:1 comp at -6 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="1" ladspa:hasLabel="2:1 comp at -9 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="2" ladspa:hasLabel="2:1 comp at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="3" ladspa:hasLabel="2:1 comp at -18 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="4" ladspa:hasLabel="2.5:1 comp at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="5" ladspa:hasLabel="3:1 comp at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="6" ladspa:hasLabel="3:1 comp at -15 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="7" ladspa:hasLabel="Compressor/Gate" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="8" ladspa:hasLabel="Expander" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="9" ladspa:hasLabel="Hard limiter at -6 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="10" ladspa:hasLabel="Hard limiter at -12 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="11" ladspa:hasLabel="Hard gate at -35 dB" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="12" ladspa:hasLabel="Soft limiter" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="13" ladspa:hasLabel="Soft knee comp/gate" />
+            </ladspa:hasPoint>
+            <ladspa:hasPoint>
+              <ladspa:Point rdf:value="14" ladspa:hasLabel="Soft gate below -36 dB" />
+            </ladspa:hasPoint>
+          </ladspa:Scale>
+        </ladspa:hasScale>
+      </ladspa:InputControlPort>
+    </ladspa:hasPort>
+    <ladspa:hasSetting>
+      <ladspa:Default>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="128">
+            <ladspa:forPort rdf:resource="&ladspa;2153.0" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="502">
+            <ladspa:forPort rdf:resource="&ladspa;2153.1" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2153.2" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2153.3" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="-60">
+            <ladspa:forPort rdf:resource="&ladspa;2153.4" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="-60">
+            <ladspa:forPort rdf:resource="&ladspa;2153.5" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2153.6" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2153.7" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2153.8" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+        <ladspa:hasPortValue>
+          <ladspa:PortValue rdf:value="0">
+            <ladspa:forPort rdf:resource="&ladspa;2153.9" />
+          </ladspa:PortValue>
+        </ladspa:hasPortValue>
+      </ladspa:Default>
+    </ladspa:hasSetting>
+  </ladspa:DynamicsPlugin>
+
 </rdf:RDF>

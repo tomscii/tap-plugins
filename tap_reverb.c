@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.7 2004/03/28 19:47:56 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.8 2004/05/01 16:15:06 tszilagyi Exp $
 */
 
 
@@ -640,7 +640,7 @@ _init() {
 	port_names[ALLPS_EN] = strdup("Allpass Filters");
 	port_names[BANDPASS_EN] = strdup("Bandpass Filter");
 	port_names[STEREO_ENH] = strdup("Enhanced Stereo");
-	port_names[MODE] = strdup("Type");
+	port_names[MODE] = strdup("Reverb Type");
 	port_names[INPUT_L] = strdup("Input Left");
 	port_names[OUTPUT_L] = strdup("Output Left");
 	port_names[INPUT_R] = strdup("Input Right");
