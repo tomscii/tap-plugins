@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.h,v 1.7 2004/05/01 16:15:06 tszilagyi Exp $
+    $Id: tap_reverb.h,v 1.8 2004/06/09 20:10:10 tszilagyi Exp $
 */
 
 
@@ -56,7 +56,7 @@
 #define ENH_STEREO_RATIO  0.998f
 
 /* compensation ratio of freq_resp in fb_gain calc */
-#define FR_R_COMP         0.5f
+#define FR_R_COMP         0.75f
 
 
 typedef struct {

@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_reverb.c,v 1.8 2004/05/01 16:15:06 tszilagyi Exp $
+    $Id: tap_reverb.c,v 1.9 2004/06/09 20:10:09 tszilagyi Exp $
 */
 
 
@@ -60,15 +60,15 @@ load_plugin_data(LADSPA_Handle Instance) {
 		/* set initial values: */
 		*(((COMB_FILTER *)(ptr->combs + 2*i))->buffer_pos) = 0;
 		*(((COMB_FILTER *)(ptr->combs + 2*i+1))->buffer_pos) = 0;
+		((COMB_FILTER *)(ptr->combs + 2*i))->last_out = 0;
+		((COMB_FILTER *)(ptr->combs + 2*i+1))->last_out = 0;
 
-		eq_set_params(((COMB_FILTER *)(ptr->combs + 2*i))->filter,
-			      10000.0f,
-			      reverb_data[m].combs[i].freq_resp * -60.0f,
-			      FREQ_RESP_BWIDTH, ptr->sample_rate);
-		eq_set_params(((COMB_FILTER *)(ptr->combs + 2*i+1))->filter,
-			      10000.0f,
-			      reverb_data[m].combs[i].freq_resp * -60.0f,
-			      FREQ_RESP_BWIDTH, ptr->sample_rate);
+		lp_set_params(((COMB_FILTER *)(ptr->combs + 2*i))->filter,
+			      2000.0f + 13000.0f * (1 - reverb_data[m].combs[i].freq_resp),
+			      BANDPASS_BWIDTH, ptr->sample_rate);
+		lp_set_params(((COMB_FILTER *)(ptr->combs + 2*i+1))->filter,
+			      2000.0f + 13000.0f * (1 - reverb_data[m].combs[i].freq_resp),
+			      BANDPASS_BWIDTH, ptr->sample_rate);
 	}
 
 	/* load allps data */
@@ -87,6 +87,8 @@ load_plugin_data(LADSPA_Handle Instance) {
 		/* set initial values: */
 		*(((ALLP_FILTER *)(ptr->allps + 2*i))->buffer_pos) = 0;
 		*(((ALLP_FILTER *)(ptr->allps + 2*i+1))->buffer_pos) = 0;
+		((ALLP_FILTER *)(ptr->allps + 2*i))->last_out = 0;
+		((ALLP_FILTER *)(ptr->allps + 2*i+1))->last_out = 0;
 	}
 
 	/* init bandpass filters */
@@ -112,7 +114,9 @@ comb_run(LADSPA_Data insample, COMB_FILTER * comb) {
 				biquad_run(comb->filter, comb->fb_gain * comb->last_out),
 				comb->ringbuffer, comb->buflen, comb->buffer_pos);
 
+	outsample = FLUSH_TO_ZERO(outsample);
 	comb->last_out = outsample;
+
 	return outsample;
 }
 
@@ -123,10 +127,13 @@ allp_run(LADSPA_Data insample, ALLP_FILTER * allp) {
 
 	LADSPA_Data outsample;
 
-	outsample = push_buffer(allp->in_gain * insample + allp->fb_gain * allp->last_out,
+	outsample = push_buffer(allp->in_gain * allp->fb_gain * insample +
+				allp->fb_gain * allp->last_out,
 				allp->ringbuffer, allp->buflen, allp->buffer_pos);
 
+	outsample = FLUSH_TO_ZERO(outsample);
 	allp->last_out = outsample;
+
 	return outsample;
 }
 
@@ -144,10 +151,10 @@ comp_coeffs(LADSPA_Handle Instance) {
 
 	for (i = 0; i < ptr->num_combs / 2; i++) {
 		((COMB_FILTER *)(ptr->combs + 2*i))->fb_gain =
-			powf(0.001f, /* -60 dB */
-			     100000.0f * ((COMB_FILTER *)(ptr->combs + 2*i))->buflen
+			powf(0.001f,
+			     1000.0f * ((COMB_FILTER *)(ptr->combs + 2*i))->buflen
 			     * (1 + FR_R_COMP * ((COMB_FILTER *)(ptr->combs + 2*i))->freq_resp)
-			     / ((COMB_FILTER *)(ptr->combs + 2*i))->feedback
+			     / powf(((COMB_FILTER *)(ptr->combs + 2*i))->feedback/100.0f, 0.89f)
 			     / *(ptr->decay)
 			     / ptr->sample_rate);
 
@@ -173,16 +180,17 @@ comp_coeffs(LADSPA_Handle Instance) {
 
 	for (i = 0; i < ptr->num_allps / 2; i++) {
 		((ALLP_FILTER *)(ptr->allps + 2*i))->fb_gain =
-			powf(0.001f, /* -60 dB */
-			     10000.0f  /* smaller --> longer decay */
+			powf(0.001f, 11000.0f * ((ALLP_FILTER *)(ptr->allps + 2*i))->buflen
+			     / powf(((ALLP_FILTER *)(ptr->allps + 2*i))->feedback/100.0f, 0.88f)
 			     / *(ptr->decay)
-			     / ((ALLP_FILTER *)(ptr->allps + 2*i))->feedback);
+			     / ptr->sample_rate);
 		
 		((ALLP_FILTER *)(ptr->allps + 2*i+1))->fb_gain = 
 			((ALLP_FILTER *)(ptr->allps + 2*i))->fb_gain;
 
-		((ALLP_FILTER *)(ptr->allps + 2*i))->in_gain =
-			-10.0f / ((ALLP_FILTER *)(ptr->allps + 2 * i))->feedback;
+		((ALLP_FILTER *)(ptr->allps + 2*i))->in_gain = -0.06f
+			/ (((ALLP_FILTER *)(ptr->allps + 2 * i))->feedback/100.0f)
+			/ powf((*(ptr->decay) + 3500.0f) / 10000.0f, 1.5f);
 
 		((ALLP_FILTER *)(ptr->allps + 2*i+1))->in_gain = 
 			((ALLP_FILTER *)(ptr->allps + 2*i))->in_gain;
@@ -276,6 +284,7 @@ activate_Reverb(LADSPA_Handle Instance) {
 		for (j = 0; j < (unsigned long)MAX_COMB_DELAY * ptr->sample_rate / 1000; j++)
 		        ((COMB_FILTER *)(ptr->combs + i))->ringbuffer[j] = 0.0f;
 		*(((COMB_FILTER *)(ptr->combs + i))->buffer_pos) = 0;
+		((COMB_FILTER *)(ptr->combs + i))->last_out = 0;
 		biquad_init(((COMB_FILTER *)(ptr->combs + i))->filter);
 	}
 
@@ -283,6 +292,7 @@ activate_Reverb(LADSPA_Handle Instance) {
 		for (j = 0; j < (unsigned long)MAX_ALLP_DELAY * ptr->sample_rate / 1000; j++)
 			((ALLP_FILTER *)(ptr->allps + i))->ringbuffer[j] = 0.0f;
 		*(((ALLP_FILTER *)(ptr->allps + i))->buffer_pos) = 0;
+		((ALLP_FILTER *)(ptr->allps + i))->last_out = 0;
 	}
 
 	biquad_init(ptr->low_pass);
