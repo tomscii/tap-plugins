@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_sigmoid.c,v 1.1 2004/08/02 18:14:50 tszilagyi Exp $
+    $Id: tap_sigmoid.c,v 1.2 2005/08/29 11:44:35 tszilagyi Exp $
 */
 
 
@@ -40,9 +40,12 @@
 #define OUTPUT          3
 
 /* Total number of ports */
-
-
 #define PORTCOUNT_MONO   4
+
+
+/* The closer this is to 1.0, the slower the input parameter
+   interpolation will be. */
+#define INTERP 0.98f
 
 
 /* The structure used to hold port connection information and state */
@@ -53,10 +56,12 @@ typedef struct {
 	LADSPA_Data * input;
 	LADSPA_Data * output;
 
+	LADSPA_Data pregain_i;
+	LADSPA_Data postgain_i;
+
 	unsigned long sample_rate;
 	LADSPA_Data run_adding_gain;
 } Sigmoid;
-
 
 
 /* Construct a new plugin instance. */
@@ -76,9 +81,6 @@ instantiate_Sigmoid(const LADSPA_Descriptor * Descriptor,
 }
 
 
-
-
-
 /* Connect a port to a data location. */
 void 
 connect_port_Sigmoid(LADSPA_Handle Instance,
@@ -90,9 +92,11 @@ connect_port_Sigmoid(LADSPA_Handle Instance,
 	switch (Port) {
 	case PREGAIN:
 		ptr->pregain = DataLocation;
+		ptr->pregain_i = db2lin(LIMIT(*DataLocation,-90.0f,20.0f));
 		break;
 	case POSTGAIN:
 		ptr->postgain = DataLocation;
+		ptr->postgain_i = db2lin(LIMIT(*DataLocation,-90.0f,20.0f));
 		break;
 	case INPUT:
 		ptr->input = DataLocation;
@@ -104,7 +108,6 @@ connect_port_Sigmoid(LADSPA_Handle Instance,
 }
 
 
-
 void 
 run_Sigmoid(LADSPA_Handle Instance,
 	    unsigned long SampleCount) {
@@ -114,6 +117,8 @@ run_Sigmoid(LADSPA_Handle Instance,
 	LADSPA_Data * output = ptr->output;
 	LADSPA_Data pregain = db2lin(LIMIT(*(ptr->pregain),-90.0f,20.0f));
 	LADSPA_Data postgain = db2lin(LIMIT(*(ptr->postgain),-90.0f,20.0f));
+	LADSPA_Data pregain_i = ptr->pregain_i;
+	LADSPA_Data postgain_i = ptr->postgain_i;
 
 	unsigned long sample_index;
 	unsigned long sample_count = SampleCount;
@@ -124,14 +129,19 @@ run_Sigmoid(LADSPA_Handle Instance,
 
 	for (sample_index = 0; sample_index < sample_count; sample_index++) {
 
-		in = *(input++) * pregain;
+		pregain_i = pregain_i * INTERP + pregain * (1.0f - INTERP);
+		postgain_i = postgain_i * INTERP + postgain * (1.0f - INTERP);
+
+		in = *(input++) * pregain_i;
 		
 		out = 2.0f / (1.0f + exp(-5.0*in)) - 1.0f;
 
-		*(output++) = out * postgain;
+		*(output++) = out * postgain_i;
 	}
-}
 
+	ptr->pregain_i = pregain_i;
+	ptr->postgain_i = postgain_i;
+}
 
 
 void
@@ -143,7 +153,6 @@ set_run_adding_gain_Sigmoid(LADSPA_Handle Instance, LADSPA_Data gain) {
 }
 
 
-
 void 
 run_adding_Sigmoid(LADSPA_Handle Instance,
 		   unsigned long SampleCount) {
@@ -153,6 +162,8 @@ run_adding_Sigmoid(LADSPA_Handle Instance,
 	LADSPA_Data * output = ptr->output;
 	LADSPA_Data pregain = db2lin(LIMIT(*(ptr->pregain),-90.0f,20.0f));
 	LADSPA_Data postgain = db2lin(LIMIT(*(ptr->postgain),-90.0f,20.0f));
+	LADSPA_Data pregain_i = ptr->pregain_i;
+	LADSPA_Data postgain_i = ptr->postgain_i;
 
 	unsigned long sample_index;
 	unsigned long sample_count = SampleCount;
@@ -163,15 +174,19 @@ run_adding_Sigmoid(LADSPA_Handle Instance,
 
 	for (sample_index = 0; sample_index < sample_count; sample_index++) {
 
-		in = *(input++) * pregain;
+		pregain_i = pregain_i * INTERP + pregain * (1.0f - INTERP);
+		postgain_i = postgain_i * INTERP + postgain * (1.0f - INTERP);
+
+		in = *(input++) * pregain_i;
 		
 		out = 2.0f / (1.0f + exp(-5.0*in)) - 1.0f;
 
-		*(output++) += out * postgain * ptr->run_adding_gain;
+		*(output++) = out * postgain_i * ptr->run_adding_gain;
 	}
+
+	ptr->pregain_i = pregain_i;
+	ptr->postgain_i = postgain_i;
 }
-
-
 
 
 /* Throw away a Sigmoid effect instance. */
@@ -182,9 +197,7 @@ cleanup_Sigmoid(LADSPA_Handle Instance) {
 }
 
 
-
 LADSPA_Descriptor * mono_descriptor = NULL;
-
 
 
 /* _init() is called automatically when the plugin library is first
