@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
     
-    $Id: tap_eq.c,v 1.6 2004/04/18 19:56:56 tszilagyi Exp $
+    $Id: tap_eq.c,v 1.7 2006/08/09 12:03:24 tszilagyi Exp $
 */
 
 
@@ -224,6 +224,8 @@ instantiate_eq(const LADSPA_Descriptor *descriptor, unsigned long s_rate) {
 	float fs;
 
 	fs = s_rate;
+
+	memset(ptr, 0, sizeof(eq));
 	
 	filters = calloc(8, sizeof(biquad));
 
