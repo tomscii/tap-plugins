@@ -1,0 +1,17 @@
+This plugin is based on http://bs2b.sourceforge.net/
+Explanation and filter responces can be found there.
+
+Usage Tips:
+
+The crossfeed selection choices from several crossfeed values. From low to high, higher settings will bring the stereo field more in front of you.
+Crossfeed 2 and 3 seem to remove high frequency information. So higher is not always better. 
+Default is 1, because it seems the safest default.
+
+HardRT=yes
+run_adding=yes
+in_place=probably, but i'm not sure
+id=4000 for the moment
+cpu usage=unknown, don't how to test accurately, will you test this?
+i/o=2in 2out
+
+A small note to credits would be appreciated.

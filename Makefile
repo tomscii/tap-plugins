@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.16 2004/08/13 18:34:31 tszilagyi Exp $
+#   $Id: Makefile,v 1.17 2006/11/26 19:42:44 tszilagyi Exp $
 
 
 #####################################################################
@@ -39,6 +39,7 @@ CFLAGS		=	-I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -f
 LDFLAGS		=	-nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt
 
 PLUGINS		=	tap_autopan.so \
+			tap_bs2b.so \
 			tap_chorusflanger.so \
 			tap_deesser.so \
 			tap_dynamics_m.so \
@@ -90,6 +91,10 @@ tap_limiter.so: tap_limiter.c tap_utils.h ladspa.h
 tap_autopan.so: tap_autopan.c tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_autopan.c -o tap_autopan.o
 	$(CC) $(LDFLAGS) -o tap_autopan.so tap_autopan.o
+
+tap_bs2b.so: tap_bs2b.c tap_utils.h ladspa.h bs2b.h
+	$(CC) $(CFLAGS) tap_bs2b.c -o tap_bs2b.o
+	$(CC) $(LDFLAGS) -o tap_bs2b.so tap_bs2b.o
 
 tap_deesser.so: tap_deesser.c tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_deesser.c -o tap_deesser.o
