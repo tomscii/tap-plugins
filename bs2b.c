@@ -39,20 +39,22 @@
 /* Highboost filter */
 #define hi_filter(in, in_1, out_1) (_a0_hi * in + _a1_hi * in_1 + _b1_hi * out_1)
 
-static int _level = DEFAULT_CLEVEL;  /* Crossfeed level */
-static int _srate = DEFAULT_SRATE;   /* Sample rate (Hz) */
+static int _level = BS2B_DEFAULT_CLEVEL;  /* Crossfeed level */
+static int _srate = BS2B_DEFAULT_SRATE;   /* Sample rate (Hz) */
+
+/* Default coefficients for High Easy level and 44100 Hz ) */
 
 /* Lowpass IIR filter coefficients */
-static double _a0_lo =  0.031610691184471;
-static double _b1_lo =  0.931240297017394;
+static double _a0_lo =  0.037788750135521;
+static double _b1_lo =  0.905078951270879;
 
 /* Highboost IIR filter coefficients */
-static double _a0_hi =  0.978014757767383;
-static double _a1_hi = -0.903661591334011;
-static double _b1_hi =  0.903661591334011;
+static double _a0_hi =  0.973324969589985;
+static double _a1_hi = -0.870302905339220;
+static double _b1_hi =  0.870302905339220;
 
 /* Global gain against overloading */
-static double _gain =  0.812005663461717;
+static double _gain =  0.838619849405637;
 
 /* Buffer of last filtered sample.
  * [0] - first channel, [1] - second channel
@@ -107,31 +109,52 @@ init (void)
 	double x;
 
 	if ((_srate > 192000) || (_srate < 2000))
-		_srate = DEFAULT_SRATE;
+		_srate = BS2B_DEFAULT_SRATE;
 	
 	switch (_level)
 	{
-	case HIGH_CLEVEL: /* High crossfeed level (virtual speakers are closer to itself) */
-		Fc_lo = 700.0;
-		Fc_hi = 1021.0;
-		G_lo  = 0.530884444230988;
-		G_hi  = 0.250105790667544;
-		break;
-
-	case LOW_CLEVEL: /* Low crossfeed level */
+	case BS2B_LOW_CLEVEL: /* Low crossfeed level */
 		Fc_lo = 360.0;
 		Fc_hi = 501.0;
 		G_lo  = 0.398107170553497;
 		G_hi  = 0.205671765275719;
 		break;
 
-	default: /* Middle crossfeed level */
-		_level = MIDDLE_CLEVEL;
-
+	case BS2B_MIDDLE_CLEVEL: /* Middle crossfeed level */
 		Fc_lo = 500.0;
 		Fc_hi = 711.0;
 		G_lo  = 0.459726988530872;
 		G_hi  = 0.228208484414988;
+		break;
+
+	case BS2B_HIGH_CLEVEL: /* High crossfeed level (virtual speakers are closer to itself) */
+		Fc_lo = 700.0;
+		Fc_hi = 1021.0;
+		G_lo  = 0.530884444230988;
+		G_hi  = 0.250105790667544;
+		break;
+
+	case BS2B_LOW_ECLEVEL: /* Low easy crossfeed level */
+		Fc_lo = 360.0;
+		Fc_hi = 494.0;
+		G_lo  = 0.316227766016838;
+		G_hi  = 0.168236228897329;
+		break;
+
+	case BS2B_MIDDLE_ECLEVEL: /* Middle easy crossfeed level */
+		Fc_lo = 500.0;
+		Fc_hi = 689.0;
+		G_lo  = 0.354813389233575;
+		G_hi  = 0.187169483835901;
+		break;
+
+	default: /* High easy crossfeed level */
+		_level = BS2B_HIGH_ECLEVEL;
+
+		Fc_lo = 700.0;
+		Fc_hi = 975.0;
+		G_lo  = 0.398107170553497;
+		G_hi  = 0.205671765275719;
 		break;
 	} /* switch */
 

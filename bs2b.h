@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* The library didn't work without activating the .c file aswell */
-
 #ifndef BS2B_C
 #define BS2B_C
 
@@ -33,19 +31,31 @@
 #ifndef BS2B_H
 #define BS2B_H
 
-#define HIGH_CLEVEL     3
-#define MIDDLE_CLEVEL   2
-#define LOW_CLEVEL      1
-#define DEFAULT_CLEVEL  MIDDLE_CLEVEL
-#define DEFAULT_SRATE   44100
+/* Number of crossfeed levels */
+#define BS2B_CLEVELS           3
+
+/* Normal crossfeed levels */
+#define BS2B_HIGH_CLEVEL       3
+#define BS2B_MIDDLE_CLEVEL     2
+#define BS2B_LOW_CLEVEL        1
+
+/* Easy crossfeed levels */
+#define BS2B_HIGH_ECLEVEL      BS2B_HIGH_CLEVEL    + BS2B_CLEVELS
+#define BS2B_MIDDLE_ECLEVEL    BS2B_MIDDLE_CLEVEL  + BS2B_CLEVELS
+#define BS2B_LOW_ECLEVEL       BS2B_LOW_CLEVEL     + BS2B_CLEVELS
+
+/* Default crossfeed levels */
+#define BS2B_DEFAULT_CLEVEL    BS2B_HIGH_ECLEVEL
+/* Default sample rate (Hz) */
+#define BS2B_DEFAULT_SRATE     44100
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif	/* __cplusplus */
-	
+
 /* Clear buffers and set new coefficients with new crossfeed level value.
- * level - crossfeed level of HIGH_CLEVEL, MIDDLE_CLEVEL or LOW_CLEVEL values.
+ * level - crossfeed level of *LEVEL values.
  */
 void
 bs2b_set_level (int level);

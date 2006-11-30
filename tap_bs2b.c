@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_bs2b.c,v 1.1 2006/11/26 19:42:44 tszilagyi Exp $
+    $Id: tap_bs2b.c,v 1.2 2006/11/30 19:34:39 tszilagyi Exp $
 */
 
 #include <stdio.h>
@@ -36,25 +36,28 @@
 /* The port numbers for the plugin: */
 
 #define CONTROL_CROSSFEED	0
-#define INPUT_L         	1
-#define INPUT_R         	2
-#define OUTPUT_L        	3
-#define OUTPUT_R        	4
+#define CONTROL_HIGH_BOOST	1
+#define INPUT_L         	2
+#define INPUT_R         	3
+#define OUTPUT_L        	4
+#define OUTPUT_R        	5
 
 
 /* Total number of ports */
 
-#define PORTCOUNT_STEREO   5
+#define PORTCOUNT_STEREO   6
 
 /* The structure used to hold port connection information and state */
 
 typedef struct {
 	LADSPA_Data * crossfeed;
+	LADSPA_Data * high_boost;
 	LADSPA_Data * input_L;
 	LADSPA_Data * input_R;
 	LADSPA_Data * output_L;
 	LADSPA_Data * output_R;
 	unsigned long SampleRate;
+	LADSPA_Data run_adding_gain;
 } BS2B;
 
 
@@ -62,7 +65,7 @@ typedef struct {
 /* Construct a new plugin instance. */
 LADSPA_Handle 
 instantiate_BS2B(const LADSPA_Descriptor * Descriptor,
-		    unsigned long SampleRate) {
+		 unsigned long SampleRate) {
 	
 	LADSPA_Handle * ptr;
 	
@@ -87,8 +90,8 @@ activate_BS2B(LADSPA_Handle Instance) {
 /* Connect a port to a data location. */
 void 
 connect_port_BS2B(LADSPA_Handle Instance,
-		     unsigned long Port,
-		     LADSPA_Data * DataLocation) {
+		  unsigned long Port,
+		  LADSPA_Data * DataLocation) {
 	
 	BS2B * ptr;
 	
@@ -96,6 +99,9 @@ connect_port_BS2B(LADSPA_Handle Instance,
 	switch (Port) {
 	case CONTROL_CROSSFEED:
 		ptr->crossfeed = DataLocation;
+		break;
+	case CONTROL_HIGH_BOOST:
+		ptr->high_boost = DataLocation;
 		break;
 	case INPUT_L:
 		ptr->input_L = DataLocation;
@@ -116,7 +122,7 @@ connect_port_BS2B(LADSPA_Handle Instance,
 
 void 
 run_BS2B(LADSPA_Handle Instance,
-		unsigned long SampleCount) {
+	 unsigned long SampleCount) {
   
 	BS2B * ptr = (BS2B *)Instance;
 
@@ -125,18 +131,25 @@ run_BS2B(LADSPA_Handle Instance,
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
 	unsigned long SampleRate = ptr->SampleRate;
-	LADSPA_Data * crossfeed = ptr->crossfeed;
+	LADSPA_Data crossfeed = *(ptr->crossfeed);
+	LADSPA_Data high_boost = *(ptr->high_boost);
 	unsigned long sample_index;
 	LADSPA_Data samples[SampleCount*2];
 	LADSPA_Data * samplepointer = samples;
 	
 	/* The bs2b library expects an array of both the left and right input samples */		    
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		samples[sample_index*2]=*(input_L++);
-		samples[sample_index*2+1]=*(input_R++);
+		samples[sample_index*2] = *(input_L++);
+		samples[sample_index*2+1] = *(input_R++);
 	}
 	
-	bs2b_set_level ((int)floor(*crossfeed+0.5));
+	/* Levels are from 1 to 6, the normal levels are 1-3 and the boosted ones 4-6 */
+	if (high_boost > 0.0f) {
+		bs2b_set_level ((int)(crossfeed+BS2B_CLEVELS));
+	} else {
+		bs2b_set_level ((int)(crossfeed));
+	}
+	
 	bs2b_set_srate (SampleRate);
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 		bs2b_cross_feed_f32 (samplepointer);
@@ -144,9 +157,19 @@ run_BS2B(LADSPA_Handle Instance,
 	}
 	
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		*(output_L++)=samples[sample_index*2];
-		*(output_R++)=samples[sample_index*2+1];
+		*(output_L++) = samples[sample_index*2];
+		*(output_R++) = samples[sample_index*2+1];
 	}
+}
+
+void
+set_run_adding_gain_BS2B(LADSPA_Handle Instance, LADSPA_Data gain) {
+
+	BS2B * ptr;
+
+	ptr = (BS2B *)Instance;
+
+	ptr->run_adding_gain = gain;
 }
 
 void 
@@ -160,18 +183,24 @@ run_adding_BS2B(LADSPA_Handle Instance,
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
 	unsigned long SampleRate = ptr->SampleRate;
-	LADSPA_Data * crossfeed = ptr->crossfeed;
+	LADSPA_Data crossfeed = *ptr->crossfeed;
+	LADSPA_Data high_boost = *ptr->high_boost;
 	unsigned long sample_index;
 	LADSPA_Data samples[SampleCount*2];
 	LADSPA_Data * samplepointer = samples;
 	
-	/* The bs2b library expects an array of both the left and right input samples */
+	/* The bs2b library expects an array of both the left and right input samples */		    
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		samples[sample_index*2]=*(input_L++);
-		samples[sample_index*2+1]=*(input_R++);
+		samples[sample_index*2] = *(input_L++);
+		samples[sample_index*2+1] = *(input_R++);
 	}
 	
-	bs2b_set_level ((int)floor(*crossfeed+0.5));
+	if (high_boost > 0.0f) {
+		bs2b_set_level ((int)(crossfeed+BS2B_CLEVELS));
+	} else {
+		bs2b_set_level ((int)(crossfeed));
+	}
+	
 	bs2b_set_srate (SampleRate);
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 		bs2b_cross_feed_f32 (samplepointer);
@@ -179,8 +208,8 @@ run_adding_BS2B(LADSPA_Handle Instance,
 	}
 	
 	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
-		*(output_L++)=samples[sample_index*2];
-		*(output_R++)=samples[sample_index*2+1];
+		*(output_L++) += samples[sample_index*2]*ptr->run_adding_gain;
+		*(output_R++) += samples[sample_index*2+1]*ptr->run_adding_gain;
 	}
 }
 
@@ -221,6 +250,7 @@ _init() {
 
 	mono_descriptor->PortDescriptors = (const LADSPA_PortDescriptor *)port_descriptors;
 	port_descriptors[CONTROL_CROSSFEED] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+	port_descriptors[CONTROL_HIGH_BOOST] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 	port_descriptors[INPUT_L] = LADSPA_PORT_INPUT | LADSPA_PORT_AUDIO;
 	port_descriptors[INPUT_R] = LADSPA_PORT_INPUT | LADSPA_PORT_AUDIO;
 	port_descriptors[OUTPUT_L] = LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO;
@@ -231,7 +261,8 @@ _init() {
 		exit(1);
 
 	mono_descriptor->PortNames = (const char **)port_names;
-	port_names[CONTROL_CROSSFEED] = strdup("Crossfeed");
+	port_names[CONTROL_CROSSFEED] = strdup("Crossfeed Level");
+	port_names[CONTROL_HIGH_BOOST] = strdup("High Boost");
 	port_names[INPUT_L] = strdup("Input L");
 	port_names[INPUT_R] = strdup("Input R");
 	port_names[OUTPUT_L] = strdup("Output L");
@@ -246,9 +277,12 @@ _init() {
 		(LADSPA_HINT_BOUNDED_BELOW |
 		 LADSPA_HINT_BOUNDED_ABOVE |
 		 LADSPA_HINT_INTEGER |
-		 LADSPA_HINT_DEFAULT_MINIMUM);
+		 LADSPA_HINT_DEFAULT_MAXIMUM);
 	port_range_hints[CONTROL_CROSSFEED].LowerBound = 1;
 	port_range_hints[CONTROL_CROSSFEED].UpperBound = 3;
+	port_range_hints[CONTROL_HIGH_BOOST].HintDescriptor = 
+		(LADSPA_HINT_TOGGLED |
+		 LADSPA_HINT_DEFAULT_1);
 	port_range_hints[INPUT_L].HintDescriptor = 0;
 	port_range_hints[INPUT_R].HintDescriptor = 0;
 	port_range_hints[OUTPUT_L].HintDescriptor = 0;
@@ -258,6 +292,7 @@ _init() {
 	mono_descriptor->activate = activate_BS2B;
 	mono_descriptor->run = run_BS2B;
 	mono_descriptor->run_adding = run_adding_BS2B;
+	mono_descriptor->set_run_adding_gain = set_run_adding_gain_BS2B;
 	mono_descriptor->deactivate = NULL;
 	mono_descriptor->cleanup = cleanup_BS2B;
 }
