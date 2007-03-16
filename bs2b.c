@@ -238,35 +238,42 @@ bs2b_is_clear (void)
 void
 bs2b_cross_feed (double *sample)
 {
-	/* Lowpass filter */
-	_last_sample.lo[0] = lo_filter (sample[0], _last_sample.lo[0]);
-	_last_sample.lo[1] = lo_filter (sample[1], _last_sample.lo[1]);
+	/* The filter didn't like to be fed with 0 sample (resulted in very high cpu usage), so this should avoid that */
+	if ( ( ( fabs(_last_sample.asis[0]) > EPS ) && ( fabs(_last_sample.asis[1]) > EPS ) ) ||
+		( ( fabs(sample[0]) > EPS ) && ( fabs(sample[1]) > EPS ) ) ||
+		( ( fabs(_last_sample.lo[0]) > EPS ) && ( fabs(_last_sample.lo[1]) > EPS ) ) ||
+		( ( fabs(_last_sample.hi[0]) > EPS ) && ( fabs(_last_sample.hi[1]) > EPS ) ) ) {
+		
+		/* Lowpass filter */
+		_last_sample.lo[0] = lo_filter (sample[0], _last_sample.lo[0]);
+		_last_sample.lo[1] = lo_filter (sample[1], _last_sample.lo[1]);
 
-	/* Highboost filter */
-	_last_sample.hi[0] =
-		hi_filter (sample[0], _last_sample.asis[0], _last_sample.hi[0]);
-	_last_sample.hi[1] =
-		hi_filter (sample[1], _last_sample.asis[1], _last_sample.hi[1]);
-	_last_sample.asis[0] = sample[0];
-	_last_sample.asis[1] = sample[1];
+		/* Highboost filter */
+		_last_sample.hi[0] =
+			hi_filter (sample[0], _last_sample.asis[0], _last_sample.hi[0]);
+		_last_sample.hi[1] =
+			hi_filter (sample[1], _last_sample.asis[1], _last_sample.hi[1]);
+		_last_sample.asis[0] = sample[0];
+		_last_sample.asis[1] = sample[1];
 
-	/* Crossfeed */
-	sample[0] = _last_sample.hi[0] + _last_sample.lo[1];
-	sample[1] = _last_sample.hi[1] + _last_sample.lo[0];
+		/* Crossfeed */
+		sample[0] = _last_sample.hi[0] + _last_sample.lo[1];
+		sample[1] = _last_sample.hi[1] + _last_sample.lo[0];
 
-	/* Bass boost cause allpass attenuation */
-	sample[0] *= _gain;
-	sample[1] *= _gain;
+		/* Bass boost cause allpass attenuation */
+		sample[0] *= _gain;
+		sample[1] *= _gain;
 
-	/* Clipping of overloaded samples */
-	if (sample[0] > 1.0)
-		sample[0] = 1.0;
-	if (sample[0] < -1.0)
-		sample[0] = -1.0;
-	if (sample[1] > 1.0)
-		sample[1] = 1.0;
-	if (sample[1] < -1.0)
-		sample[1] = -1.0;
+		/* Clipping of overloaded samples */
+		if (sample[0] > 1.0)
+			sample[0] = 1.0;
+		if (sample[0] < -1.0)
+			sample[0] = -1.0;
+		if (sample[1] > 1.0)
+			sample[1] = 1.0;
+		if (sample[1] < -1.0)
+			sample[1] = -1.0;
+	}
 } /* bs2b_cross_feed */
 
 void

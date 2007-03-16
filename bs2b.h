@@ -49,6 +49,8 @@
 /* Default sample rate (Hz) */
 #define BS2B_DEFAULT_SRATE     44100
 
+#define EPS                    0.00000001
+
 #ifdef __cplusplus
 extern "C"
 {
