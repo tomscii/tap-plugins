@@ -1,4 +1,4 @@
-#   Copyright (C) 2004 Tom Szilagyi
+#   Copyright (C) 2004-2009 Tom Szilagyi
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.17 2006/11/26 19:42:44 tszilagyi Exp $
+#   $Id: Makefile,v 1.18 2009/08/17 11:16:19 tszilagyi Exp $
 
 
 #####################################################################
@@ -39,7 +39,6 @@ CFLAGS		=	-I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -f
 LDFLAGS		=	-nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt
 
 PLUGINS		=	tap_autopan.so \
-			tap_bs2b.so \
 			tap_chorusflanger.so \
 			tap_deesser.so \
 			tap_dynamics_m.so \
@@ -91,10 +90,6 @@ tap_limiter.so: tap_limiter.c tap_utils.h ladspa.h
 tap_autopan.so: tap_autopan.c tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_autopan.c -o tap_autopan.o
 	$(CC) $(LDFLAGS) -o tap_autopan.so tap_autopan.o
-
-tap_bs2b.so: tap_bs2b.c tap_utils.h ladspa.h bs2b.h
-	$(CC) $(CFLAGS) tap_bs2b.c -o tap_bs2b.o
-	$(CC) $(LDFLAGS) -o tap_bs2b.so tap_bs2b.o
 
 tap_deesser.so: tap_deesser.c tap_utils.h ladspa.h
 	$(CC) $(CFLAGS) tap_deesser.c -o tap_deesser.o
@@ -161,5 +156,5 @@ always:
 clean:
 	-rm -f `find . -name "*.so"`
 	-rm -f `find . -name "*.o"`
-	-rm -f `find .. -name "*~"`
+	-rm -f `find . -name "*~"`
 

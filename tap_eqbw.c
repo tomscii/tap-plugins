@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
     
-    $Id: tap_eqbw.c,v 1.5 2006/08/09 12:03:24 tszilagyi Exp $
+    $Id: tap_eqbw.c,v 1.6 2009/08/17 11:16:19 tszilagyi Exp $
 */
 
 
@@ -278,6 +278,38 @@ instantiate_eq(const LADSPA_Descriptor *descriptor, unsigned long s_rate) {
 	ptr->filters = filters;
 	ptr->fs = fs;
 	ptr->run_adding_gain = 1.0f;
+
+	ptr->old_ch0f = 100.0f;
+	ptr->old_ch0g = 0.0f;
+	ptr->old_ch0b = BWIDTH;
+
+	ptr->old_ch1f = 200.0f;
+	ptr->old_ch1g = 0.0f;
+	ptr->old_ch1b = BWIDTH;
+
+	ptr->old_ch2f = 400.0f;
+	ptr->old_ch2g = 0.0f;
+	ptr->old_ch2b = BWIDTH;
+
+	ptr->old_ch3f = 1000.0f;
+	ptr->old_ch3g = 0.0f;
+	ptr->old_ch3b = BWIDTH;
+
+	ptr->old_ch4f = 3000.0f;
+	ptr->old_ch4g = 0.0f;
+	ptr->old_ch4b = BWIDTH;
+
+	ptr->old_ch5f = 6000.0f;
+	ptr->old_ch5g = 0.0f;
+	ptr->old_ch5b = BWIDTH;
+
+	ptr->old_ch6f = 12000.0f;
+	ptr->old_ch6g = 0.0f;
+	ptr->old_ch6b = BWIDTH;
+
+	ptr->old_ch7f = 15000.0f;
+	ptr->old_ch7g = 0.0f;
+	ptr->old_ch7b = BWIDTH;
 
 	eq_set_params(&filters[0], 100.0f, 0.0f, BWIDTH, fs);
 	eq_set_params(&filters[1], 200.0f, 0.0f, BWIDTH, fs);
