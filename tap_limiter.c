@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tap_limiter.c,v 1.5 2004/02/21 17:33:36 tszilagyi Exp $
+    $Id: tap_limiter.c,v 1.6 2012/07/08 14:19:35 tszilagyi Exp $
 */
 
 
@@ -176,18 +176,38 @@ run_Limiter(LADSPA_Handle Instance,
 			if (read_buffer(ptr->ringbuffer, ptr->buflen,
 					ptr->pos, ptr->ready_num) >= 0.0f) {
 				index_offs = 0;
-				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						    ptr->ready_num + index_offs) >= 0.0f) &&
-				       (ptr->ready_num + index_offs < run_length)) {
+				do {
 					index_offs++;
-				}
+					if (ptr->ready_num + index_offs == run_length) {
+						/*
+						 * No more zero-crossing point in this chunk.
+						 * Fetch more samples unless we are at the last one.
+						 */
+						if (ptr->ready_num != 0) {
+							run_length = ptr->ready_num;
+							goto push;
+						}
+						break;
+					}
+				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						     ptr->ready_num + index_offs) >= 0.0f);
 			} else {
 				index_offs = 0;
-				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						    ptr->ready_num + index_offs) <= 0.0f) &&
-				       (ptr->ready_num + index_offs < run_length)) {
+				do {
 					index_offs++;
-				}
+					if (ptr->ready_num + index_offs == run_length) {
+						/*
+						 * No more zero-crossing point in this chunk.
+						 * Fetch more samples unless we are at the last one.
+						 */
+						if (ptr->ready_num != 0) {
+							run_length = ptr->ready_num;
+							goto push;
+						}
+						break;
+					}
+				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						     ptr->ready_num + index_offs) < 0.0f);
 			}
 			
 			/* search for max value in scanned halfcycle */
@@ -208,6 +228,7 @@ run_Limiter(LADSPA_Handle Instance,
 			ptr->ready_num += index_offs;			
 		}
 		
+	push:
 		/* push run_length values out of ringbuffer, feed with input */
 		for (sample_index = 0; sample_index < run_length; sample_index++) {
 			*(output++) = out_vol * 
@@ -262,18 +283,38 @@ run_adding_Limiter(LADSPA_Handle Instance,
 			if (read_buffer(ptr->ringbuffer, ptr->buflen,
 					ptr->pos, ptr->ready_num) >= 0.0f) {
 				index_offs = 0;
-				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						    ptr->ready_num + index_offs) >= 0.0f) &&
-				       (ptr->ready_num + index_offs < run_length)) {
+				do {
 					index_offs++;
-				}
+					if (ptr->ready_num + index_offs == run_length) {
+						/*
+						 * No more zero-crossing point in this chunk.
+						 * Fetch more samples unless we are at the last one.
+						 */
+						if (ptr->ready_num != 0) {
+							run_length = ptr->ready_num;
+							goto push;
+						}
+						break;
+					}
+				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						     ptr->ready_num + index_offs) >= 0.0f);
 			} else {
 				index_offs = 0;
-				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						    ptr->ready_num + index_offs) <= 0.0f) &&
-				       (ptr->ready_num + index_offs < run_length)) {
+				do {
 					index_offs++;
-				}
+					if (ptr->ready_num + index_offs == run_length) {
+						/*
+						 * No more zero-crossing point in this chunk.
+						 * Fetch more samples unless we are at the last one.
+						 */
+						if (ptr->ready_num != 0) {
+							run_length = ptr->ready_num;
+							goto push;
+						}
+						break;
+					}
+				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						     ptr->ready_num + index_offs) < 0.0f);
 			}
 			
 			/* search for max value in scanned halfcycle */
@@ -294,6 +335,7 @@ run_adding_Limiter(LADSPA_Handle Instance,
 			ptr->ready_num += index_offs;			
 		}
 		
+	push:
 		/* push run_length values out of ringbuffer, feed with input */
 		for (sample_index = 0; sample_index < run_length; sample_index++) {
 			*(output++) += ptr->run_adding_gain * out_vol * 
