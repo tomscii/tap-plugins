@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#   $Id: Makefile,v 1.18 2009/08/17 11:16:19 tszilagyi Exp $
+#   $Id: Makefile,v 1.19 2014/02/14 18:59:14 tszilagyi Exp $
 
 
 #####################################################################
@@ -34,127 +34,35 @@ INSTALL_LRDF_DIR	=	/usr/local/share/ladspa/rdf/
 
 # GENERAL
 
-CC		=	gcc
-CFLAGS		=	-I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC
-LDFLAGS		=	-nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt
+CC	= gcc
+CFLAGS	= -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC
+LDFLAGS	= -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt
+MODULES = $(wildcard *.c)
 
-PLUGINS		=	tap_autopan.so \
-			tap_chorusflanger.so \
-			tap_deesser.so \
-			tap_dynamics_m.so \
-			tap_dynamics_st.so \
-			tap_eq.so \
-			tap_eqbw.so \
-			tap_doubler.so \
-			tap_pinknoise.so \
-			tap_pitch.so \
-			tap_reflector.so \
-			tap_reverb.so \
-			tap_rotspeak.so \
-			tap_limiter.so \
-			tap_sigmoid.so \
-			tap_echo.so \
-			tap_tremolo.so \
-			tap_tubewarmth.so \
-			tap_vibrato.so
-
-
-all: $(PLUGINS)
+all: $(MODULES:%.c=%.so)
 
 # RULES TO BUILD PLUGINS FROM C CODE
 
-tap_tremolo.so: tap_tremolo.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_tremolo.c -o tap_tremolo.o
-	$(CC) $(LDFLAGS) -o tap_tremolo.so tap_tremolo.o
+tap_reverb.o: tap_reverb.h tap_reverb_presets.h
+tap_dynamics_m.o: tap_dynamics_presets.h
+tap_dynamics_st.o: tap_dynamics_presets.h
 
-tap_eq.so: tap_eq.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_eq.c -o tap_eq.o
-	$(CC) $(LDFLAGS) -o tap_eq.so tap_eq.o
+%.o: %.c tap_utils.h ladspa.h
+	$(CC) $(CFLAGS) $< -o $@
 
-tap_eqbw.so: tap_eqbw.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_eqbw.c -o tap_eqbw.o
-	$(CC) $(LDFLAGS) -o tap_eqbw.so tap_eqbw.o
-
-tap_echo.so: tap_echo.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_echo.c -o tap_echo.o
-	$(CC) $(LDFLAGS) -o tap_echo.so tap_echo.o
-
-tap_reverb.so: tap_reverb.c tap_reverb.h tap_reverb_presets.h tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_reverb.c -o tap_reverb.o
-	$(CC) $(LDFLAGS) -o tap_reverb.so tap_reverb.o
-
-tap_limiter.so: tap_limiter.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_limiter.c -o tap_limiter.o
-	$(CC) $(LDFLAGS) -o tap_limiter.so tap_limiter.o
-
-tap_autopan.so: tap_autopan.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_autopan.c -o tap_autopan.o
-	$(CC) $(LDFLAGS) -o tap_autopan.so tap_autopan.o
-
-tap_deesser.so: tap_deesser.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_deesser.c -o tap_deesser.o
-	$(CC) $(LDFLAGS) -o tap_deesser.so tap_deesser.o
-
-tap_vibrato.so: tap_vibrato.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_vibrato.c -o tap_vibrato.o
-	$(CC) $(LDFLAGS) -o tap_vibrato.so tap_vibrato.o
-
-tap_rotspeak.so: tap_rotspeak.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_rotspeak.c -o tap_rotspeak.o
-	$(CC) $(LDFLAGS) -o tap_rotspeak.so tap_rotspeak.o
-
-tap_pitch.so: tap_pitch.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_pitch.c -o tap_pitch.o
-	$(CC) $(LDFLAGS) -o tap_pitch.so tap_pitch.o
-
-tap_dynamics_m.so: tap_dynamics_m.c tap_dynamics_presets.h tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_dynamics_m.c -o tap_dynamics_m.o
-	$(CC) $(LDFLAGS) -o tap_dynamics_m.so tap_dynamics_m.o
-
-tap_dynamics_st.so: tap_dynamics_st.c tap_dynamics_presets.h tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_dynamics_st.c -o tap_dynamics_st.o
-	$(CC) $(LDFLAGS) -o tap_dynamics_st.so tap_dynamics_st.o
-
-tap_reflector.so: tap_reflector.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_reflector.c -o tap_reflector.o
-	$(CC) $(LDFLAGS) -o tap_reflector.so tap_reflector.o
-
-tap_pinknoise.so: tap_pinknoise.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_pinknoise.c -o tap_pinknoise.o
-	$(CC) $(LDFLAGS) -o tap_pinknoise.so tap_pinknoise.o
-
-tap_doubler.so: tap_doubler.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_doubler.c -o tap_doubler.o
-	$(CC) $(LDFLAGS) -o tap_doubler.so tap_doubler.o
-
-tap_sigmoid.so: tap_sigmoid.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_sigmoid.c -o tap_sigmoid.o
-	$(CC) $(LDFLAGS) -o tap_sigmoid.so tap_sigmoid.o
-
-tap_tubewarmth.so: tap_tubewarmth.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_tubewarmth.c -o tap_tubewarmth.o
-	$(CC) $(LDFLAGS) -o tap_tubewarmth.so tap_tubewarmth.o
-
-tap_chorusflanger.so: tap_chorusflanger.c tap_utils.h ladspa.h
-	$(CC) $(CFLAGS) tap_chorusflanger.c -o tap_chorusflanger.o
-	$(CC) $(LDFLAGS) -o tap_chorusflanger.so tap_chorusflanger.o
-
+%.so: %.o
+	$(CC) -o $@ $< $(LDFLAGS)
 
 # OTHER TARGETS
 
-install: targets
-	-mkdir -p		$(INSTALL_PLUGINS_DIR)
-	cp *.so 		$(INSTALL_PLUGINS_DIR)
-	-mkdir -p		$(INSTALL_LRDF_DIR)
-	cp tap-plugins.rdf 	$(INSTALL_LRDF_DIR)
-	cp tap_reverb.rdf 	$(INSTALL_LRDF_DIR)
-
-targets:	$(PLUGINS)
-
-always:	
+install: all
+	-mkdir -p          $(INSTALL_PLUGINS_DIR)
+	cp *.so            $(INSTALL_PLUGINS_DIR)
+	-mkdir -p          $(INSTALL_LRDF_DIR)
+	cp tap-plugins.rdf $(INSTALL_LRDF_DIR)
+	cp tap_reverb.rdf  $(INSTALL_LRDF_DIR)
 
 clean:
-	-rm -f `find . -name "*.so"`
-	-rm -f `find . -name "*.o"`
-	-rm -f `find . -name "*~"`
+	-rm -f *.so *.o *~
 
+.PHONY: all install clean
