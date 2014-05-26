@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: tap_echo.c,v 1.7 2004/12/06 09:32:41 tszilagyi Exp $
 */
 
 
