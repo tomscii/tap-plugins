@@ -74,12 +74,12 @@ typedef struct {
 	biquad sidech_lo_filter;
 	biquad sidech_hi_filter;
 	LADSPA_Data * ringbuffer;
-	unsigned long buflen;
-	unsigned long pos;
+	int buflen;
+	int pos;
 	LADSPA_Data sum;
 	LADSPA_Data old_freq;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } DeEsser;
 
@@ -87,7 +87,7 @@ typedef struct {
 /* fast linear to decibel conversion using log10_table[] */
 LADSPA_Data fast_lin2db(LADSPA_Data lin) {
 
-        unsigned long k;
+        int k;
         int exp = 0;
         LADSPA_Data mant = ABS(lin);
 
@@ -149,7 +149,7 @@ void
 activate_DeEsser(LADSPA_Handle Instance) {
 
 	DeEsser * ptr = (DeEsser *)Instance;
-	unsigned long i;
+	int i;
 
 	for (i = 0; i < RINGBUF_SIZE; i++)
 		ptr->ringbuffer[i] = 0.0f;
@@ -207,7 +207,7 @@ run_DeEsser(LADSPA_Handle Instance,
 	LADSPA_Data freq = LIMIT(*(ptr->freq),2000.0f,16000.0f);
 	LADSPA_Data sidechain = LIMIT(*(ptr->sidechain),0.0f,1.0f);
 	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,1.0f);
-	unsigned long sample_index;
+	int sample_index;
 
 	LADSPA_Data in = 0;
 	LADSPA_Data out = 0;
@@ -281,7 +281,7 @@ run_adding_DeEsser(LADSPA_Handle Instance,
 	LADSPA_Data freq = LIMIT(*(ptr->freq),2000.0f,16000.0f);
 	LADSPA_Data sidechain = LIMIT(*(ptr->sidechain),0.0f,1.0f);
 	LADSPA_Data monitor = LIMIT(*(ptr->monitor),0.0f,1.0f);
-	unsigned long sample_index;
+	int sample_index;
 
 	LADSPA_Data in = 0;
 	LADSPA_Data out = 0;
@@ -455,7 +455,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

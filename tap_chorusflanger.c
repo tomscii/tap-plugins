@@ -84,11 +84,11 @@ typedef struct {
 	LADSPA_Data * output_R;
 
 	LADSPA_Data * ring_L;
-	unsigned long buflen_L;
-	unsigned long pos_L;
+	int buflen_L;
+	int pos_L;
 	LADSPA_Data * ring_R;
-	unsigned long buflen_R;
-	unsigned long pos_R;
+	int buflen_R;
+	int pos_R;
 
 	biquad highpass_L;
 	biquad highpass_R;
@@ -96,7 +96,7 @@ typedef struct {
 	float cm_phase;
 	float dm_phase;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } ChorusFlanger;
 
@@ -141,7 +141,7 @@ void
 activate_ChorusFlanger(LADSPA_Handle Instance) {
 
 	ChorusFlanger * ptr = (ChorusFlanger *)Instance;
-	unsigned long i;
+	int i;
 
 	for (i = 0; i < (DEPTH_BUFLEN + DELAY_BUFLEN) * ptr->sample_rate / 192000; i++) {
 		ptr->ring_L[i] = 0.0f;
@@ -220,8 +220,8 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in_L = 0.0f;
 	LADSPA_Data in_R = 0.0f;
@@ -272,8 +272,8 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 			phase_R -= COS_TABLE_SIZE;
 		
 		d_pos = delay * ptr->sample_rate / 1000.0f;
-		fpos_L = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
-		fpos_R = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
+		fpos_L = d_pos + depth * (0.5f + 0.5f * cos_table[(int)phase_L]);
+		fpos_R = d_pos + depth * (0.5f + 0.5f * cos_table[(int)phase_R]);
 		
 		n_L = floorf(fpos_L);
 		n_R = floorf(fpos_R);
@@ -281,14 +281,14 @@ run_ChorusFlanger(LADSPA_Handle Instance,
 		rem_R = fpos_R - n_R;
 		
 		s_a_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n_L);
+				    ptr->pos_L, (int) n_L);
 		s_b_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n_L + 1);
+				    ptr->pos_L, (int) n_L + 1);
 		
 		s_a_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n_R);
+				    ptr->pos_R, (int) n_R);
 		s_b_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n_R + 1);
+				    ptr->pos_R, (int) n_R + 1);
 		
 		d_L = ((1 - rem_L) * s_a_L + rem_L * s_b_L);
 		d_R = ((1 - rem_R) * s_a_R + rem_R * s_b_R);
@@ -334,8 +334,8 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in_L = 0.0f;
 	LADSPA_Data in_R = 0.0f;
@@ -386,8 +386,8 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 			phase_R -= COS_TABLE_SIZE;
 		
 		d_pos = delay * ptr->sample_rate / 1000.0f;
-		fpos_L = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_L]);
-		fpos_R = d_pos + depth * (0.5f + 0.5f * cos_table[(unsigned long)phase_R]);
+		fpos_L = d_pos + depth * (0.5f + 0.5f * cos_table[(int)phase_L]);
+		fpos_R = d_pos + depth * (0.5f + 0.5f * cos_table[(int)phase_R]);
 		
 		n_L = floorf(fpos_L);
 		n_R = floorf(fpos_R);
@@ -395,14 +395,14 @@ run_adding_ChorusFlanger(LADSPA_Handle Instance,
 		rem_R = fpos_R - n_R;
 		
 		s_a_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n_L);
+				    ptr->pos_L, (int) n_L);
 		s_b_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n_L + 1);
+				    ptr->pos_L, (int) n_L + 1);
 		
 		s_a_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n_R);
+				    ptr->pos_R, (int) n_R);
 		s_b_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n_R + 1);
+				    ptr->pos_R, (int) n_R + 1);
 		
 		d_L = ((1 - rem_L) * s_a_L + rem_L * s_b_L);
 		d_R = ((1 - rem_R) * s_a_R + rem_R * s_b_R);
@@ -559,7 +559,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

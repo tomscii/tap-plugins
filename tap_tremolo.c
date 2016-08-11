@@ -57,7 +57,7 @@ typedef struct {
 	LADSPA_Data * Control_Gain;
 	LADSPA_Data * InputBuffer_1;
 	LADSPA_Data * OutputBuffer_1;
-	unsigned long SampleRate;
+	int SampleRate;
 	LADSPA_Data Phase;
 	LADSPA_Data run_adding_gain;
 } Tremolo;
@@ -131,7 +131,7 @@ run_Tremolo(LADSPA_Handle Instance,
 	LADSPA_Data depth;
 	LADSPA_Data gain;
 	Tremolo * ptr;
-	unsigned long sample_index;
+	int sample_index;
 	LADSPA_Data phase = 0.0f;
 	
 	ptr = (Tremolo *)Instance;
@@ -149,7 +149,7 @@ run_Tremolo(LADSPA_Handle Instance,
 			phase -= 1024.0f;
 
 		*(output++) = *(input++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(int) phase]);
 	}
 	ptr->Phase = phase;
 	while (ptr->Phase >= 1024.0f)
@@ -180,7 +180,7 @@ run_adding_Tremolo(LADSPA_Handle Instance,
 	LADSPA_Data depth;
 	LADSPA_Data gain;
 	Tremolo * ptr;
-	unsigned long sample_index;
+	int sample_index;
 	LADSPA_Data phase = 0.0f;
 	
 	ptr = (Tremolo *)Instance;
@@ -198,7 +198,7 @@ run_adding_Tremolo(LADSPA_Handle Instance,
 			phase -= 1024.0f;
 
 		*(output++) += *(input++) * ptr->run_adding_gain * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(int) phase]);
 	}
 	ptr->Phase = phase;
 	while (ptr->Phase >= 1024.0f)
@@ -307,7 +307,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

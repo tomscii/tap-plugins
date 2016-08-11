@@ -73,7 +73,7 @@
 static inline
 rev_t
 push_buffer(rev_t insample, rev_t * buffer,
-            unsigned long buflen, unsigned long * pos) {
+            int buflen, int * pos) {
 
         rev_t outsample;
 
@@ -94,8 +94,8 @@ push_buffer(rev_t insample, rev_t * buffer,
  */
 static inline
 rev_t
-read_buffer(rev_t * buffer, unsigned long buflen,
-            unsigned long pos, unsigned long n) {
+read_buffer(rev_t * buffer, int buflen,
+            int pos, int n) {
 
         while (n + pos >= buflen)
                 n -= buflen;
@@ -111,8 +111,8 @@ read_buffer(rev_t * buffer, unsigned long buflen,
  */
 static inline
 void
-write_buffer(rev_t insample, rev_t * buffer, unsigned long buflen,
-             unsigned long pos, unsigned long n) {
+write_buffer(rev_t insample, rev_t * buffer, int buflen,
+             int pos, int n) {
 
         while (n + pos >= buflen)
                 n -= buflen;
@@ -225,8 +225,8 @@ typedef struct {
 	float fb_gain;
 	float freq_resp;
 	rev_t * ringbuffer;
-	unsigned long buflen;
-	unsigned long * buffer_pos;
+	int buflen;
+	int * buffer_pos;
 	biquad * filter;
 	rev_t last_out;
 } COMB_FILTER;
@@ -236,8 +236,8 @@ typedef struct {
 	float fb_gain;
 	float in_gain;
 	rev_t * ringbuffer;
-	unsigned long buflen;
-	unsigned long * buffer_pos;
+	int buflen;
+	int * buffer_pos;
 	rev_t last_out;
 } ALLP_FILTER;
 
@@ -245,13 +245,13 @@ typedef struct {
 /* The structure used to hold port connection information and state */
 
 typedef struct {
-	unsigned long num_combs; /* total number of comb filters */
-	unsigned long num_allps; /* total number of allpass filters */
+	int num_combs; /* total number of comb filters */
+	int num_allps; /* total number of allpass filters */
 	COMB_FILTER * combs;
 	ALLP_FILTER * allps;
 	biquad * low_pass; /* ptr to 2 low-pass filters */
 	biquad * high_pass; /* ptr to 2 high-pass filters */
-	unsigned long sample_rate;
+	int sample_rate;
 
 	LADSPA_Data * decay;
 	LADSPA_Data * drylevel;
@@ -286,8 +286,8 @@ typedef struct {
 } ALLP_DATA;
 
 typedef struct {
-	unsigned long num_combs;
-	unsigned long num_allps;
+	int num_combs;
+	int num_allps;
 	COMB_DATA combs[MAX_COMBS];
 	ALLP_DATA allps[MAX_ALLPS];
 	LADSPA_Data bandpass_low;

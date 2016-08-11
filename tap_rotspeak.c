@@ -87,18 +87,18 @@ typedef struct {
 	LADSPA_Data * output_R;
 
         LADSPA_Data * ringbuffer_h_L;
-        unsigned long buflen_h_L;
-        unsigned long pos_h_L;
+        int buflen_h_L;
+        int pos_h_L;
         LADSPA_Data * ringbuffer_h_R;
-        unsigned long buflen_h_R;
-        unsigned long pos_h_R;
+        int buflen_h_R;
+        int pos_h_R;
 
         LADSPA_Data * ringbuffer_b_L;
-        unsigned long buflen_b_L;
-        unsigned long pos_b_L;
+        int buflen_b_L;
+        int pos_b_L;
         LADSPA_Data * ringbuffer_b_R;
-        unsigned long buflen_b_R;
-        unsigned long pos_b_R;
+        int buflen_b_R;
+        int pos_b_R;
 
 	biquad * eq_filter_L;
 	biquad * lp_filter_L;
@@ -108,7 +108,7 @@ typedef struct {
 	biquad * lp_filter_R;
 	biquad * hp_filter_R;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data phase_h;
 	LADSPA_Data phase_b;
 
@@ -268,7 +268,7 @@ run_RotSpkr(LADSPA_Handle Instance,
 	LADSPA_Data pmdepth_b =
 		LIMIT(1.0f/(1.0f+FREQ_PITCH*freq_b/C_AIR) * ptr->sample_rate
 		      / 200.0f / M_PI / freq_b, 0, ptr->buflen_b_L / 2);
-	unsigned long sample_index;
+	int sample_index;
 
 	LADSPA_Data in_L = 0.0f, in_R = 0.0f;
 	LADSPA_Data lo_L = 0.0f, lo_R = 0.0f;
@@ -332,55 +332,55 @@ run_RotSpkr(LADSPA_Handle Instance,
                 push_buffer(lo_L, ptr->ringbuffer_b_L, ptr->buflen_b_L, &(ptr->pos_b_L));
                 push_buffer(lo_R, ptr->ringbuffer_b_R, ptr->buflen_b_R, &(ptr->pos_b_R));
 
-                fpos_h_L = pmdepth_h * (1.0f - cos_table[(unsigned long) phase_pm_h_L]);
+                fpos_h_L = pmdepth_h * (1.0f - cos_table[(int) phase_pm_h_L]);
                 n_h_L = floorf(fpos_h_L);
                 rem_h_L = fpos_h_L - n_h_L;
                 sa_h_L = read_buffer(ptr->ringbuffer_h_L,
-				     ptr->buflen_h_L, ptr->pos_h_L, (unsigned long) n_h_L);
+				     ptr->buflen_h_L, ptr->pos_h_L, (int) n_h_L);
                 sb_h_L = read_buffer(ptr->ringbuffer_h_L,
-				     ptr->buflen_h_L, ptr->pos_h_L, (unsigned long) n_h_L + 1);
+				     ptr->buflen_h_L, ptr->pos_h_L, (int) n_h_L + 1);
                 pm_h_L = (1 - rem_h_L) * sa_h_L + rem_h_L * sb_h_L;
 
-                fpos_h_R = pmdepth_h * (1.0f - cos_table[(unsigned long) phase_pm_h_R]);
+                fpos_h_R = pmdepth_h * (1.0f - cos_table[(int) phase_pm_h_R]);
                 n_h_R = floorf(fpos_h_R);
                 rem_h_R = fpos_h_R - n_h_R;
                 sa_h_R = read_buffer(ptr->ringbuffer_h_R,
-				     ptr->buflen_h_R, ptr->pos_h_R, (unsigned long) n_h_R);
+				     ptr->buflen_h_R, ptr->pos_h_R, (int) n_h_R);
                 sb_h_R = read_buffer(ptr->ringbuffer_h_R,
-				     ptr->buflen_h_R, ptr->pos_h_R, (unsigned long) n_h_R + 1);
+				     ptr->buflen_h_R, ptr->pos_h_R, (int) n_h_R + 1);
                 pm_h_R = (1 - rem_h_R) * sa_h_R + rem_h_R * sb_h_R;
 
 
-                fpos_b_L = pmdepth_b * (1.0f - cos_table[(unsigned long) phase_pm_b_L]);
+                fpos_b_L = pmdepth_b * (1.0f - cos_table[(int) phase_pm_b_L]);
                 n_b_L = floorf(fpos_b_L);
                 rem_b_L = fpos_b_L - n_b_L;
                 sa_b_L = read_buffer(ptr->ringbuffer_b_L,
-				     ptr->buflen_b_L, ptr->pos_b_L, (unsigned long) n_b_L);
+				     ptr->buflen_b_L, ptr->pos_b_L, (int) n_b_L);
                 sb_b_L = read_buffer(ptr->ringbuffer_b_L,
-				     ptr->buflen_b_L, ptr->pos_b_L, (unsigned long) n_b_L + 1);
+				     ptr->buflen_b_L, ptr->pos_b_L, (int) n_b_L + 1);
                 pm_b_L = (1 - rem_b_L) * sa_b_L + rem_b_L * sb_b_L;
 
-                fpos_b_R = pmdepth_b * (1.0f - cos_table[(unsigned long) phase_pm_b_R]);
+                fpos_b_R = pmdepth_b * (1.0f - cos_table[(int) phase_pm_b_R]);
                 n_b_R = floorf(fpos_b_R);
                 rem_b_R = fpos_b_R - n_b_R;
                 sa_b_R = read_buffer(ptr->ringbuffer_b_R,
-				     ptr->buflen_b_R, ptr->pos_b_R, (unsigned long) n_b_R);
+				     ptr->buflen_b_R, ptr->pos_b_R, (int) n_b_R);
                 sb_b_R = read_buffer(ptr->ringbuffer_b_R,
-				     ptr->buflen_b_R, ptr->pos_b_R, (unsigned long) n_b_R + 1);
+				     ptr->buflen_b_R, ptr->pos_b_R, (int) n_b_R + 1);
                 pm_b_R = (1 - rem_b_R) * sa_b_R + rem_b_R * sb_b_R;
 
 
 		*(output_L++) =
 			hrbal * pm_h_L * (1.0f + 0.5f * stwidth/100.0f *
-					  cos_table[(unsigned long) phase_h_L]) +
+					  cos_table[(int) phase_h_L]) +
 			(1.0f - hrbal) * pm_b_L * (1.0f + 0.5f * stwidth/100.0f *
-						   cos_table[(unsigned long) phase_b_L]);
+						   cos_table[(int) phase_b_L]);
 
 		*(output_R++) =
 			hrbal * pm_h_R * (1.0f + 0.5f * stwidth/100.0f *
-					  cos_table[(unsigned long) phase_h_R]) +
+					  cos_table[(int) phase_h_R]) +
 			(1.0f - hrbal) * pm_b_R * (1.0f + 0.5f * stwidth/100.0f *
-						   cos_table[(unsigned long) phase_b_R]);
+						   cos_table[(int) phase_b_R]);
 	}
 
         ptr->phase_h += 1024.0f * freq_h * sample_index / ptr->sample_rate;
@@ -424,7 +424,7 @@ run_adding_RotSpkr(LADSPA_Handle Instance,
 	LADSPA_Data pmdepth_b =
 		LIMIT(1.0f/(1.0f+FREQ_PITCH*freq_b/C_AIR) * ptr->sample_rate
 		      / 200.0f / M_PI / freq_b, 0, ptr->buflen_b_L / 2);
-	unsigned long sample_index;
+	int sample_index;
 
 	LADSPA_Data in_L = 0.0f, in_R = 0.0f;
 	LADSPA_Data lo_L = 0.0f, lo_R = 0.0f;
@@ -488,55 +488,55 @@ run_adding_RotSpkr(LADSPA_Handle Instance,
                 push_buffer(lo_L, ptr->ringbuffer_b_L, ptr->buflen_b_L, &(ptr->pos_b_L));
                 push_buffer(lo_R, ptr->ringbuffer_b_R, ptr->buflen_b_R, &(ptr->pos_b_R));
 
-                fpos_h_L = pmdepth_h * (1.0f - cos_table[(unsigned long) phase_pm_h_L]);
+                fpos_h_L = pmdepth_h * (1.0f - cos_table[(int) phase_pm_h_L]);
                 n_h_L = floorf(fpos_h_L);
                 rem_h_L = fpos_h_L - n_h_L;
                 sa_h_L = read_buffer(ptr->ringbuffer_h_L,
-				     ptr->buflen_h_L, ptr->pos_h_L, (unsigned long) n_h_L);
+				     ptr->buflen_h_L, ptr->pos_h_L, (int) n_h_L);
                 sb_h_L = read_buffer(ptr->ringbuffer_h_L,
-				     ptr->buflen_h_L, ptr->pos_h_L, (unsigned long) n_h_L + 1);
+				     ptr->buflen_h_L, ptr->pos_h_L, (int) n_h_L + 1);
                 pm_h_L = (1 - rem_h_L) * sa_h_L + rem_h_L * sb_h_L;
 
-                fpos_h_R = pmdepth_h * (1.0f - cos_table[(unsigned long) phase_pm_h_R]);
+                fpos_h_R = pmdepth_h * (1.0f - cos_table[(int) phase_pm_h_R]);
                 n_h_R = floorf(fpos_h_R);
                 rem_h_R = fpos_h_R - n_h_R;
                 sa_h_R = read_buffer(ptr->ringbuffer_h_R,
-				     ptr->buflen_h_R, ptr->pos_h_R, (unsigned long) n_h_R);
+				     ptr->buflen_h_R, ptr->pos_h_R, (int) n_h_R);
                 sb_h_R = read_buffer(ptr->ringbuffer_h_R,
-				     ptr->buflen_h_R, ptr->pos_h_R, (unsigned long) n_h_R + 1);
+				     ptr->buflen_h_R, ptr->pos_h_R, (int) n_h_R + 1);
                 pm_h_R = (1 - rem_h_R) * sa_h_R + rem_h_R * sb_h_R;
 
 
-                fpos_b_L = pmdepth_b * (1.0f - cos_table[(unsigned long) phase_pm_b_L]);
+                fpos_b_L = pmdepth_b * (1.0f - cos_table[(int) phase_pm_b_L]);
                 n_b_L = floorf(fpos_b_L);
                 rem_b_L = fpos_b_L - n_b_L;
                 sa_b_L = read_buffer(ptr->ringbuffer_b_L,
-				     ptr->buflen_b_L, ptr->pos_b_L, (unsigned long) n_b_L);
+				     ptr->buflen_b_L, ptr->pos_b_L, (int) n_b_L);
                 sb_b_L = read_buffer(ptr->ringbuffer_b_L,
-				     ptr->buflen_b_L, ptr->pos_b_L, (unsigned long) n_b_L + 1);
+				     ptr->buflen_b_L, ptr->pos_b_L, (int) n_b_L + 1);
                 pm_b_L = (1 - rem_b_L) * sa_b_L + rem_b_L * sb_b_L;
 
-                fpos_b_R = pmdepth_b * (1.0f - cos_table[(unsigned long) phase_pm_b_R]);
+                fpos_b_R = pmdepth_b * (1.0f - cos_table[(int) phase_pm_b_R]);
                 n_b_R = floorf(fpos_b_R);
                 rem_b_R = fpos_b_R - n_b_R;
                 sa_b_R = read_buffer(ptr->ringbuffer_b_R,
-				     ptr->buflen_b_R, ptr->pos_b_R, (unsigned long) n_b_R);
+				     ptr->buflen_b_R, ptr->pos_b_R, (int) n_b_R);
                 sb_b_R = read_buffer(ptr->ringbuffer_b_R,
-				     ptr->buflen_b_R, ptr->pos_b_R, (unsigned long) n_b_R + 1);
+				     ptr->buflen_b_R, ptr->pos_b_R, (int) n_b_R + 1);
                 pm_b_R = (1 - rem_b_R) * sa_b_R + rem_b_R * sb_b_R;
 
 
 		*(output_L++) += ptr->run_adding_gain *
 			hrbal * pm_h_L * (1.0f + 0.5f * stwidth/100.0f *
-					  cos_table[(unsigned long) phase_h_L]) +
+					  cos_table[(int) phase_h_L]) +
 			(1.0f - hrbal) * pm_b_L * (1.0f + 0.5f * stwidth/100.0f *
-						   cos_table[(unsigned long) phase_b_L]);
+						   cos_table[(int) phase_b_L]);
 
 		*(output_R++) += ptr->run_adding_gain *
 			hrbal * pm_h_R * (1.0f + 0.5f * stwidth/100.0f *
-					  cos_table[(unsigned long) phase_h_R]) +
+					  cos_table[(int) phase_h_R]) +
 			(1.0f - hrbal) * pm_b_R * (1.0f + 0.5f * stwidth/100.0f *
-						   cos_table[(unsigned long) phase_b_R]);
+						   cos_table[(int) phase_b_R]);
 	}
 
         ptr->phase_h += 1024.0f * freq_h * sample_index / ptr->sample_rate;
@@ -684,7 +684,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

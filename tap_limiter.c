@@ -62,11 +62,11 @@ typedef struct {
 	LADSPA_Data * output;
 
 	LADSPA_Data * ringbuffer;
-	unsigned long buflen;
-	unsigned long pos;
-	unsigned long ready_num;
+	int buflen;
+	int pos;
+	int ready_num;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Limiter;
 
@@ -106,7 +106,7 @@ void
 activate_Limiter(LADSPA_Handle Instance) {
 
 	Limiter * ptr = (Limiter *)Instance;
-	unsigned long i;
+	int i;
 
 	for (i = 0; i < RINGBUF_SIZE; i++)
 		ptr->ringbuffer[i] = 0.0f;
@@ -156,14 +156,14 @@ run_Limiter(LADSPA_Handle Instance,
 	LADSPA_Data * output = ptr->output;
 	LADSPA_Data limit_vol = db2lin(LIMIT(*(ptr->limit_vol),-30.0f,20.0f));
 	LADSPA_Data out_vol = db2lin(LIMIT(*(ptr->out_vol),-30.0f,20.0f));
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
-	unsigned long index_offs = 0;
-	unsigned long i;
+	int sample_index;
+	int sample_count = SampleCount;
+	int index_offs = 0;
+	int i;
 	LADSPA_Data max_value = 0;
 	LADSPA_Data section_gain = 0;
-	unsigned long run_length;
-	unsigned long total_length = 0;
+	int run_length;
+	int total_length = 0;
 
 
 	while (total_length < sample_count) {
@@ -263,14 +263,14 @@ run_adding_Limiter(LADSPA_Handle Instance,
 	LADSPA_Data * output = ptr->output;
 	LADSPA_Data limit_vol = db2lin(LIMIT(*(ptr->limit_vol),-30.0f,20.0f));
 	LADSPA_Data out_vol = db2lin(LIMIT(*(ptr->out_vol),-30.0f,20.0f));
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
-	unsigned long index_offs = 0;
-	unsigned long i;
+	int sample_index;
+	int sample_count = SampleCount;
+	int index_offs = 0;
+	int i;
 	LADSPA_Data max_value = 0;
 	LADSPA_Data section_gain = 0;
-	unsigned long run_length;
-	unsigned long total_length = 0;
+	int run_length;
+	int total_length = 0;
 
 
 	while (total_length < sample_count) {
@@ -449,7 +449,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

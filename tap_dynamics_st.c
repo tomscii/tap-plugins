@@ -93,7 +93,7 @@ typedef int64_t rms_t;
 
 typedef struct {
         rms_t        buffer[RMSSIZE];
-        unsigned int pos;
+        int pos;
         rms_t        sum;
 } rms_env;
 
@@ -107,7 +107,7 @@ typedef struct {
 } GRAPH_POINT;
 
 typedef struct {
-	unsigned long num_points;
+	int num_points;
 	GRAPH_POINT points[MAX_POINTS];
 } DYNAMICS_DATA;
 
@@ -131,10 +131,10 @@ typedef struct {
 	LADSPA_Data * output_L;
 	LADSPA_Data * input_R;
 	LADSPA_Data * output_R;
-	unsigned long sample_rate;
+	int sample_rate;
 
 	float * as;
-	unsigned long count;
+	int count;
 	dyn_t amp_L;
 	dyn_t amp_R;
 	dyn_t env_L;
@@ -169,7 +169,7 @@ rms_env_new(void) {
 void
 rms_env_reset(rms_env *r) {
 
-        unsigned int i;
+        int i;
 
         for (i = 0; i < RMSSIZE; i++) {
                 r->buffer[i] = 0.0f;
@@ -231,7 +231,7 @@ instantiate_Dynamics(const LADSPA_Descriptor * Descriptor, unsigned long sample_
 	LADSPA_Handle * ptr;
 
 	float * as = NULL;
-	unsigned int count = 0;
+	int count = 0;
 	dyn_t amp_L = 0.0f;
 	dyn_t amp_R = 0.0f;
 	dyn_t env_L = 0.0f;
@@ -360,14 +360,14 @@ run_Dynamics(LADSPA_Handle Instance,
         const float mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
 	const int stereo = LIMIT(*(ptr->stereo), 0, 2);
 	const int mode = LIMIT(*(ptr->mode), 0, NUM_MODES-1);
-	unsigned long sample_index;
+	int sample_index;
 
         dyn_t amp_L = ptr->amp_L;
         dyn_t amp_R = ptr->amp_R;
         dyn_t env_L = ptr->env_L;
         dyn_t env_R = ptr->env_R;
         float * as = ptr->as;
-        unsigned int count = ptr->count;
+        int count = ptr->count;
         float gain_L = ptr->gain_L;
         float gain_R = ptr->gain_R;
         float gain_out_L = ptr->gain_out_L;
@@ -377,8 +377,8 @@ run_Dynamics(LADSPA_Handle Instance,
         rms_t sum_L = ptr->sum_L;
         rms_t sum_R = ptr->sum_R;
 
-        const float ga = as[(unsigned int)(attack * 0.001f * (LADSPA_Data)(TABSIZE-1))];
-        const float gr = as[(unsigned int)(release * 0.001f * (LADSPA_Data)(TABSIZE-1))];
+        const float ga = as[(int)(attack * 0.001f * (LADSPA_Data)(TABSIZE-1))];
+        const float gr = as[(int)(release * 0.001f * (LADSPA_Data)(TABSIZE-1))];
         const float ef_a = ga * 0.25f;
         const float ef_ai = 1.0f - ef_a;
 
@@ -531,14 +531,14 @@ run_adding_Dynamics(LADSPA_Handle Instance,
         const float mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
 	const int stereo = LIMIT(*(ptr->stereo), 0, 2);
 	const int mode = LIMIT(*(ptr->mode), 0, NUM_MODES-1);
-	unsigned long sample_index;
+	int sample_index;
 
         dyn_t amp_L = ptr->amp_L;
         dyn_t amp_R = ptr->amp_R;
         dyn_t env_L = ptr->env_L;
         dyn_t env_R = ptr->env_R;
         float * as = ptr->as;
-        unsigned int count = ptr->count;
+        int count = ptr->count;
         float gain_L = ptr->gain_L;
         float gain_R = ptr->gain_R;
         float gain_out_L = ptr->gain_out_L;
@@ -548,8 +548,8 @@ run_adding_Dynamics(LADSPA_Handle Instance,
         rms_t sum_L = ptr->sum_L;
         rms_t sum_R = ptr->sum_R;
 
-        const float ga = as[(unsigned int)(attack * 0.001f * (LADSPA_Data)(TABSIZE-1))];
-        const float gr = as[(unsigned int)(release * 0.001f * (LADSPA_Data)(TABSIZE-1))];
+        const float ga = as[(int)(attack * 0.001f * (LADSPA_Data)(TABSIZE-1))];
+        const float gr = as[(int)(release * 0.001f * (LADSPA_Data)(TABSIZE-1))];
         const float ef_a = ga * 0.25f;
         const float ef_ai = 1.0f - ef_a;
 
@@ -841,7 +841,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

@@ -363,7 +363,7 @@ run_eq(LADSPA_Handle instance, unsigned long sample_count) {
 	biquad * filters = ptr->filters;
 	float fs = ptr->fs;
 
-	unsigned long pos;
+	int pos;
 	float samp;
 
 
@@ -503,7 +503,7 @@ run_adding_eq(LADSPA_Handle instance, unsigned long sample_count) {
 	biquad * filters = ptr->filters;
 	float fs = ptr->fs;
 
-	unsigned long pos;
+	int pos;
 	float samp;
 
 

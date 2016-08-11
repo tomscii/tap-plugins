@@ -73,7 +73,7 @@ typedef struct {
 	LADSPA_Data prev_drive;
 	LADSPA_Data prev_blend;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } TubeWarmth;
 
@@ -177,9 +177,9 @@ run_TubeWarmth(LADSPA_Handle Instance,
 	LADSPA_Data drive = LIMIT(*(ptr->drive),0.1f,10.0f);
 	LADSPA_Data blend = LIMIT(*(ptr->blend),-10.0f,10.0f);
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
-	unsigned long sample_rate = ptr->sample_rate;
+	int sample_index;
+	int sample_count = SampleCount;
+	int sample_rate = ptr->sample_rate;
 
 	LADSPA_Data rdrive = ptr->rdrive;
 	LADSPA_Data rbdr = ptr->rbdr;
@@ -282,9 +282,9 @@ run_adding_TubeWarmth(LADSPA_Handle Instance,
 	LADSPA_Data drive = LIMIT(*(ptr->drive),0.1f,10.0f);
 	LADSPA_Data blend = LIMIT(*(ptr->blend),-10.0f,10.0f);
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
-	unsigned long sample_rate = ptr->sample_rate;
+	int sample_index;
+	int sample_count = SampleCount;
+	int sample_rate = ptr->sample_rate;
 
 	LADSPA_Data rdrive = ptr->rdrive;
 	LADSPA_Data rbdr = ptr->rbdr;
@@ -455,7 +455,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

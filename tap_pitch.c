@@ -80,11 +80,11 @@ typedef struct {
 	LADSPA_Data * output;
 
 	LADSPA_Data * ringbuffer;
-	unsigned long buflen;
-	unsigned long pos;
+	int buflen;
+	int pos;
 	LADSPA_Data phase;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Pitch;
 
@@ -117,7 +117,7 @@ void
 activate_Pitch(LADSPA_Handle Instance) {
 
 	Pitch * ptr = (Pitch *)Instance;
-	unsigned long i;
+	int i;
 
 	for (i = 0; i < ptr->buflen; i++)
 		ptr->ringbuffer[i] = 0.0f;
@@ -180,8 +180,8 @@ run_Pitch(LADSPA_Handle Instance,
 	LADSPA_Data r;
 	LADSPA_Data depth;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 	
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data sign = 1.0f;
@@ -248,25 +248,25 @@ run_Pitch(LADSPA_Handle Instance,
 		n_2 = floorf(fpos_2);
 		rem_2 = fpos_2 - n_2;
 
-		sa_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_0);
-		sb_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_0 + 1);
+		sa_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_0);
+		sb_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_0 + 1);
 
-		sa_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_1);
-		sb_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_1 + 1);
+		sa_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_1);
+		sb_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_1 + 1);
 
-		sa_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_2);
-		sb_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_2 + 1);
+		sa_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_2);
+		sb_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_2 + 1);
 
 		*(output++) = 
 			wetlevel *
-			((1.0f + cos_table[(unsigned long) phase_am_0]) *
+			((1.0f + cos_table[(int) phase_am_0]) *
 			 ((1 - rem_0) * sa_0 + rem_0 * sb_0) +
-			 (1.0f + cos_table[(unsigned long) phase_am_1]) *
+			 (1.0f + cos_table[(int) phase_am_1]) *
 			 ((1 - rem_1) * sa_1 + rem_1 * sb_1) +
-			 (1.0f + cos_table[(unsigned long) phase_am_2]) *
+			 (1.0f + cos_table[(int) phase_am_2]) *
 			 ((1 - rem_2) * sa_2 + rem_2 * sb_2)) +
 			drylevel *
-			read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) depth);
+			read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) depth);
 
 	}
 
@@ -274,7 +274,7 @@ run_Pitch(LADSPA_Handle Instance,
 	while (ptr->phase >= COS_TABLE_SIZE)
 		ptr->phase -= COS_TABLE_SIZE;
 
-	*(ptr->latency) = buflen - (unsigned long) depth;
+	*(ptr->latency) = buflen - (int) depth;
 }
 
 
@@ -304,8 +304,8 @@ run_adding_Pitch(LADSPA_Handle Instance,
 	LADSPA_Data r;
 	LADSPA_Data depth;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 	
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data sign = 1.0f;
@@ -372,25 +372,25 @@ run_adding_Pitch(LADSPA_Handle Instance,
 		n_2 = floorf(fpos_2);
 		rem_2 = fpos_2 - n_2;
 
-		sa_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_0);
-		sb_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_0 + 1);
+		sa_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_0);
+		sb_0 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_0 + 1);
 
-		sa_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_1);
-		sb_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_1 + 1);
+		sa_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_1);
+		sb_1 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_1 + 1);
 
-		sa_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_2);
-		sb_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n_2 + 1);
+		sa_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_2);
+		sb_2 = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n_2 + 1);
 
 		*(output++) += ptr->run_adding_gain *
 			wetlevel *
-			((1.0f + cos_table[(unsigned long) phase_am_0]) *
+			((1.0f + cos_table[(int) phase_am_0]) *
 			 ((1 - rem_0) * sa_0 + rem_0 * sb_0) +
-			 (1.0f + cos_table[(unsigned long) phase_am_1]) *
+			 (1.0f + cos_table[(int) phase_am_1]) *
 			 ((1 - rem_1) * sa_1 + rem_1 * sb_1) +
-			 (1.0f + cos_table[(unsigned long) phase_am_2]) *
+			 (1.0f + cos_table[(int) phase_am_2]) *
 			 ((1 - rem_2) * sa_2 + rem_2 * sb_2)) +
 			drylevel *
-			read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) depth);
+			read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) depth);
 
 	}
 
@@ -398,7 +398,7 @@ run_adding_Pitch(LADSPA_Handle Instance,
 	while (ptr->phase >= COS_TABLE_SIZE)
 		ptr->phase -= COS_TABLE_SIZE;
 
-	*(ptr->latency) = buflen - (unsigned long) depth;
+	*(ptr->latency) = buflen - (int) depth;
 }
 
 
@@ -520,7 +520,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

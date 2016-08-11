@@ -71,7 +71,7 @@ void
 load_plugin_data(LADSPA_Handle Instance) {
 
 	Reverb * ptr = (Reverb *)Instance;
-	unsigned long m;
+	int m;
 	int i;
 
 
@@ -270,7 +270,7 @@ LADSPA_Handle
 instantiate_Reverb(const LADSPA_Descriptor * Descriptor,
 		   unsigned long             SampleRate) {
 	
-	unsigned long i;
+	int i;
 	LADSPA_Handle * p;
 	Reverb * ptr = NULL;
 	
@@ -286,11 +286,11 @@ instantiate_Reverb(const LADSPA_Descriptor * Descriptor,
 			return NULL;
 		for (i = 0; i < 2 * MAX_COMBS; i++) {
 			if ((((COMB_FILTER *)(ptr->combs + i))->ringbuffer =
-			     calloc((unsigned long)MAX_COMB_DELAY * ptr->sample_rate / 1000,
+			     calloc((int)MAX_COMB_DELAY * ptr->sample_rate / 1000,
 				    sizeof(LADSPA_Data))) == NULL)
 				return NULL;
 			if ((((COMB_FILTER *)(ptr->combs + i))->buffer_pos =
-			     calloc(1, sizeof(unsigned long))) == NULL)
+			     calloc(1, sizeof(int))) == NULL)
 				return NULL;
 			if ((((COMB_FILTER *)(ptr->combs + i))->filter =
 			     calloc(1, sizeof(biquad))) == NULL)
@@ -302,11 +302,11 @@ instantiate_Reverb(const LADSPA_Descriptor * Descriptor,
 			return NULL;
 		for (i = 0; i < 2 * MAX_ALLPS; i++) {
 			if ((((ALLP_FILTER *)(ptr->allps + i))->ringbuffer =
-			     calloc((unsigned long)MAX_ALLP_DELAY * ptr->sample_rate / 1000,
+			     calloc((int)MAX_ALLP_DELAY * ptr->sample_rate / 1000,
 				    sizeof(LADSPA_Data))) == NULL)
 				return NULL;
 			if ((((ALLP_FILTER *)(ptr->allps + i))->buffer_pos =
-			     calloc(1, sizeof(unsigned long))) == NULL)
+			     calloc(1, sizeof(int))) == NULL)
 				return NULL;
 		}
 		
@@ -328,10 +328,10 @@ void
 activate_Reverb(LADSPA_Handle Instance) {
 
 	Reverb * ptr = (Reverb *)Instance;
-	unsigned long i,j;
+	int i,j;
 
 	for (i = 0; i < 2 * MAX_COMBS; i++) {
-		for (j = 0; j < (unsigned long)MAX_COMB_DELAY * ptr->sample_rate / 1000; j++)
+		for (j = 0; j < (int)MAX_COMB_DELAY * ptr->sample_rate / 1000; j++)
 		        ((COMB_FILTER *)(ptr->combs + i))->ringbuffer[j] = 0.0f;
 		*(((COMB_FILTER *)(ptr->combs + i))->buffer_pos) = 0;
 		((COMB_FILTER *)(ptr->combs + i))->last_out = 0;
@@ -339,7 +339,7 @@ activate_Reverb(LADSPA_Handle Instance) {
 	}
 
 	for (i = 0; i < 2 * MAX_ALLPS; i++) {
-		for (j = 0; j < (unsigned long)MAX_ALLP_DELAY * ptr->sample_rate / 1000; j++)
+		for (j = 0; j < (int)MAX_ALLP_DELAY * ptr->sample_rate / 1000; j++)
 			((ALLP_FILTER *)(ptr->allps + i))->ringbuffer[j] = 0.0f;
 		*(((ALLP_FILTER *)(ptr->allps + i))->buffer_pos) = 0;
 		((ALLP_FILTER *)(ptr->allps + i))->last_out = 0;
@@ -413,7 +413,7 @@ run_Reverb(LADSPA_Handle Instance,
 	
 	Reverb * ptr = (Reverb *)Instance;
 
-	unsigned long sample_index;
+	int sample_index;
 	int i;
 
 	LADSPA_Data decay = LIMIT(*(ptr->decay),0.0f,10000.0f);
@@ -532,7 +532,7 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 	
 	Reverb * ptr = (Reverb *)Instance;
 
-	unsigned long sample_index;
+	int sample_index;
 	int i;
 
 	LADSPA_Data decay = LIMIT(*(ptr->decay),0.0f,10000.0f);
@@ -799,7 +799,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);

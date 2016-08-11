@@ -59,7 +59,7 @@ typedef struct {
 	LADSPA_Data pregain_i;
 	LADSPA_Data postgain_i;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Sigmoid;
 
@@ -120,8 +120,8 @@ run_Sigmoid(LADSPA_Handle Instance,
 	LADSPA_Data pregain_i = ptr->pregain_i;
 	LADSPA_Data postgain_i = ptr->postgain_i;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data out = 0.0f;
@@ -180,8 +180,8 @@ run_adding_Sigmoid(LADSPA_Handle Instance,
 	LADSPA_Data pregain_i = ptr->pregain_i;
 	LADSPA_Data postgain_i = ptr->postgain_i;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data out = 0.0f;
@@ -302,7 +302,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
