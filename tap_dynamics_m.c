@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: tap_dynamics_m.c,v 1.2 2004/06/15 14:50:55 tszilagyi Exp $
 */
 
 

@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-    
-    $Id: tap_eq.c,v 1.8 2009/08/17 11:16:19 tszilagyi Exp $
 */
 
 
