@@ -237,7 +237,7 @@ _init() {
 		exit(1);
 
 	/* initialize RNG */
-	srand(time(0));
+	//srand(time(0));
 
 	mono_descriptor->UniqueID = ID_MONO;
 	mono_descriptor->Label = strdup("tap_pinknoise");
