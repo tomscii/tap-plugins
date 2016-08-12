@@ -35,8 +35,8 @@ INSTALL_LRDF_DIR	=	/usr/local/share/ladspa/rdf/
 # GENERAL
 
 CC	= gcc
-CFLAGS	= -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC
-LDFLAGS	= -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt
+CFLAGS	+= -O3 -I. -ffast-math -c -fPIC -DPIC -g -Wall
+LDFLAGS	+= -shared -lm
 MODULES = $(wildcard *.c)
 
 all: $(MODULES:%.c=%.so)
