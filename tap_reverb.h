@@ -95,6 +95,9 @@ rev_t
 read_buffer(rev_t * buffer, int buflen,
             int pos, int n) {
 
+  while (n + pos < 0)
+    n += buflen;
+  
         while (n + pos >= buflen)
                 n -= buflen;
         return buffer[n + pos];
@@ -112,6 +115,9 @@ void
 write_buffer(rev_t insample, rev_t * buffer, int buflen,
              int pos, int n) {
 
+  while (n + pos < 0)
+    n += buflen;
+  
         while (n + pos >= buflen)
                 n -= buflen;
         buffer[n + pos] = insample;
