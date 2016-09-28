@@ -62,8 +62,8 @@ Taku Yamamoto <taku@tackymt.homeip.net> investigated a buffer boundary
 related bug in Scaling Limiter and provided a patch solving the problem.
 
 
-And, of course, special thanks to the Ardour [http://ardour.org] and
-JACK [http://jackit.sf.net] development teams for their tireless
+And, of course, special thanks to the Ardour [https://ardour.org/] and
+JACK [http://jackaudio.org/] development teams for their tireless
 efforts in creating one of the best Linux audio engineering platforms
 (and besides that, the recommended host for these plugins).
 TAP-plugins aims to be a very small contribution to this effort.
