@@ -57,7 +57,7 @@ typedef struct {
 	LADSPA_Data pregain_i;
 	LADSPA_Data postgain_i;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Sigmoid;
 
@@ -118,8 +118,8 @@ run_Sigmoid(LADSPA_Handle Instance,
 	LADSPA_Data pregain_i = ptr->pregain_i;
 	LADSPA_Data postgain_i = ptr->postgain_i;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data out = 0.0f;
@@ -178,8 +178,8 @@ run_adding_Sigmoid(LADSPA_Handle Instance,
 	LADSPA_Data pregain_i = ptr->pregain_i;
 	LADSPA_Data postgain_i = ptr->postgain_i;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data out = 0.0f;
@@ -226,10 +226,10 @@ cleanup_Sigmoid(LADSPA_Handle Instance) {
 LADSPA_Descriptor * mono_descriptor = NULL;
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -300,7 +300,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -316,9 +316,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 

@@ -67,24 +67,24 @@ typedef struct {
 	LADSPA_Data * output;
 
 	LADSPA_Data * ring0;
-	unsigned long buflen0;
-	unsigned long pos0;
+	int buflen0;
+	int pos0;
 	LADSPA_Data * ring1;
-	unsigned long buflen1;
-	unsigned long pos1;
+	int buflen1;
+	int pos1;
 	LADSPA_Data * delay1;
-	unsigned long delay_buflen1;
-	unsigned long delay_pos1;
+	int delay_buflen1;
+	int delay_pos1;
 	LADSPA_Data * ring2;
-	unsigned long buflen2;
-	unsigned long pos2;
+	int buflen2;
+	int pos2;
 	LADSPA_Data * delay2;
-	unsigned long delay_buflen2;
-	unsigned long delay_pos2;
+	int delay_buflen2;
+	int delay_pos2;
 
-	unsigned long fragment_pos;
+	int fragment_pos;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Reflector;
 
@@ -141,7 +141,7 @@ void
 activate_Reflector(LADSPA_Handle Instance) {
 
 	Reflector * ptr = (Reflector *)Instance;
-	unsigned long i;
+	int i;
 
 	for (i = 0; i < ptr->buflen0; i++)
 		ptr->ring0[i] = 0.0f;
@@ -207,8 +207,8 @@ run_Reflector(LADSPA_Handle Instance,
 	LADSPA_Data wetlevel = 0.333333f * db2lin(LIMIT(*(ptr->wetlevel),-90.0f,20.0f));
 	LADSPA_Data fragment = LIMIT(*(ptr->fragment),(float)MIN_FRAGMENT_LEN,(float)MAX_FRAGMENT_LEN);
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data in1 = 0.0f;
@@ -217,14 +217,14 @@ run_Reflector(LADSPA_Handle Instance,
 	LADSPA_Data out_1 = 0.0f;
 	LADSPA_Data out_2 = 0.0f;
 
-	unsigned long fragment_pos1 = 0;
-	unsigned long fragment_pos2 = 0;
+	int fragment_pos1 = 0;
+	int fragment_pos2 = 0;
 
-	unsigned long arg_0 = 0;
+	int arg_0 = 0;
 	LADSPA_Data am_0 = 0.0f;
-	unsigned long arg_1 = 0;
+	int arg_1 = 0;
 	LADSPA_Data am_1 = 0.0f;
-	unsigned long arg_2 = 0;
+	int arg_2 = 0;
 	LADSPA_Data am_2 = 0.0f;
 
 	ptr->buflen0 = 2 * fragment * ptr->sample_rate / 1000.0f;
@@ -292,8 +292,8 @@ run_adding_Reflector(LADSPA_Handle Instance,
 	LADSPA_Data wetlevel = 0.333333f * db2lin(LIMIT(*(ptr->wetlevel),-90.0f,20.0f));
 	LADSPA_Data fragment = LIMIT(*(ptr->fragment),(float)MIN_FRAGMENT_LEN,(float)MAX_FRAGMENT_LEN);
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data in1 = 0.0f;
@@ -302,14 +302,14 @@ run_adding_Reflector(LADSPA_Handle Instance,
 	LADSPA_Data out_1 = 0.0f;
 	LADSPA_Data out_2 = 0.0f;
 
-	unsigned long fragment_pos1 = 0;
-	unsigned long fragment_pos2 = 0;
+	int fragment_pos1 = 0;
+	int fragment_pos2 = 0;
 
-	unsigned long arg_0 = 0;
+	int arg_0 = 0;
 	LADSPA_Data am_0 = 0.0f;
-	unsigned long arg_1 = 0;
+	int arg_1 = 0;
 	LADSPA_Data am_1 = 0.0f;
-	unsigned long arg_2 = 0;
+	int arg_2 = 0;
 	LADSPA_Data am_2 = 0.0f;
 
 	ptr->buflen0 = 2 * fragment * ptr->sample_rate / 1000.0f;
@@ -376,10 +376,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	int i;
 	char ** port_names;
@@ -462,7 +462,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -478,9 +478,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 

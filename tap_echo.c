@@ -76,14 +76,14 @@ typedef struct {
 	LADSPA_Data * input_R;
 	LADSPA_Data * output_R;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data mpx_out_L;
 	LADSPA_Data mpx_out_R;
 
 	LADSPA_Data * ringbuffer_L;
 	LADSPA_Data * ringbuffer_R;
-	unsigned long * buffer_pos_L;
-	unsigned long * buffer_pos_R;
+	int * buffer_pos_L;
+	int * buffer_pos_R;
 
 	LADSPA_Data run_adding_gain;
 } Echo;
@@ -111,9 +111,9 @@ instantiate_Echo(const LADSPA_Descriptor * Descriptor,
 		     calloc(MAX_DELAY * ((Echo *)ptr)->sample_rate / 1000,
 			    sizeof(LADSPA_Data))) == NULL)
 			exit(1);
-		if ((((Echo *)ptr)->buffer_pos_L = calloc(1, sizeof(unsigned long))) == NULL)
+		if ((((Echo *)ptr)->buffer_pos_L = calloc(1, sizeof(int))) == NULL)
 			exit(1);
-		if ((((Echo *)ptr)->buffer_pos_R = calloc(1, sizeof(unsigned long))) == NULL)
+		if ((((Echo *)ptr)->buffer_pos_R = calloc(1, sizeof(int))) == NULL)
 			exit(1);
 		
 		*(((Echo *)ptr)->buffer_pos_L) = 0;
@@ -218,7 +218,7 @@ run_Echo(LADSPA_Handle Instance,
 	 unsigned long SampleCount) {
 	
 	Echo * ptr;
-	unsigned long sample_index;
+	int sample_index;
 
 	LADSPA_Data delaytime_L;
 	LADSPA_Data delaytime_R;
@@ -236,9 +236,9 @@ run_Echo(LADSPA_Handle Instance,
 	LADSPA_Data * input_R;
 	LADSPA_Data * output_R;
 
-	unsigned long sample_rate;
-	unsigned long buflen_L;
-	unsigned long buflen_R;
+	int sample_rate;
+	int buflen_L;
+	int buflen_R;
 
 	LADSPA_Data out_L = 0;
 	LADSPA_Data out_R = 0;
@@ -325,7 +325,7 @@ run_adding_gain_Echo(LADSPA_Handle Instance,
 	 unsigned long SampleCount) {
 	
 	Echo * ptr;
-	unsigned long sample_index;
+	int sample_index;
 
 	LADSPA_Data delaytime_L;
 	LADSPA_Data delaytime_R;
@@ -343,9 +343,9 @@ run_adding_gain_Echo(LADSPA_Handle Instance,
 	LADSPA_Data * input_R;
 	LADSPA_Data * output_R;
 
-	unsigned long sample_rate;
-	unsigned long buflen_L;
-	unsigned long buflen_R;
+	int sample_rate;
+	int buflen_L;
+	int buflen_R;
 
 	LADSPA_Data out_L = 0;
 	LADSPA_Data out_R = 0;
@@ -434,10 +434,10 @@ LADSPA_Descriptor * stereo_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -589,7 +589,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -605,9 +605,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(stereo_descriptor);
 }
 

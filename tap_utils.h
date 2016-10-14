@@ -31,7 +31,7 @@
 static inline
 LADSPA_Data
 push_buffer(LADSPA_Data insample, LADSPA_Data * buffer,
-            unsigned long buflen, unsigned long * pos) {
+            int buflen, int * pos) {
 
         LADSPA_Data outsample;
 
@@ -53,12 +53,16 @@ push_buffer(LADSPA_Data insample, LADSPA_Data * buffer,
  */
 static inline
 LADSPA_Data
-read_buffer(LADSPA_Data * buffer, unsigned long buflen,
-            unsigned long pos, unsigned long n) {
+read_buffer(LADSPA_Data * buffer, int buflen,
+            int pos, int n) {
 
-        while (n + pos >= buflen)
-                n -= buflen;
-        return buffer[n + pos];
+  while (n + pos < 0)
+    n += buflen;
+  
+  while (n + pos >= buflen)
+    n -= buflen;
+  
+  return buffer[n + pos];
 }
 
 
@@ -70,9 +74,12 @@ read_buffer(LADSPA_Data * buffer, unsigned long buflen,
  */
 static inline
 void
-write_buffer(LADSPA_Data insample, LADSPA_Data * buffer, unsigned long buflen,
-             unsigned long pos, unsigned long n) {
+write_buffer(LADSPA_Data insample, LADSPA_Data * buffer, int buflen,
+             int pos, int n) {
 
+  while (n + pos < 0)
+    n += buflen;
+  
         while (n + pos >= buflen)
                 n -= buflen;
         buffer[n + pos] = insample;

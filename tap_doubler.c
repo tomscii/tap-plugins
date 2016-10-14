@@ -82,35 +82,35 @@ typedef struct {
 	LADSPA_Data old_pitch;
 
 	LADSPA_Data * ring_L;
-	unsigned long buflen_L;
-	unsigned long pos_L;
+	int buflen_L;
+	int pos_L;
 
 	LADSPA_Data * ring_R;
-	unsigned long buflen_R;
-	unsigned long pos_R;
+	int buflen_R;
+	int pos_R;
 
 	LADSPA_Data * ring_pnoise;
-	unsigned long buflen_pnoise;
-	unsigned long pos_pnoise;
+	int buflen_pnoise;
+	int pos_pnoise;
 
 	LADSPA_Data * ring_dnoise;
-	unsigned long buflen_dnoise;
-	unsigned long pos_dnoise;
+	int buflen_dnoise;
+	int pos_dnoise;
 
 	float delay;
 	float d_delay;
 	float p_delay;
-	unsigned long n_delay;
+	int n_delay;
 
 	float pitchmod;
 	float d_pitch;
 	float p_pitch;
-	unsigned long n_pitch;
+	int n_pitch;
 
-	unsigned long p_stretch;
-	unsigned long d_stretch;
+	int p_stretch;
+	int d_stretch;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Doubler;
 
@@ -201,7 +201,7 @@ void
 activate_Doubler(LADSPA_Handle Instance) {
 
 	Doubler * ptr = (Doubler *)Instance;
-	unsigned long i;
+	int i;
 
 	for (i = 0; i < BUFLEN * ptr->sample_rate / 192000; i++) {
 		ptr->ring_L[i] = 0.0f;
@@ -287,8 +287,8 @@ run_Doubler(LADSPA_Handle Instance,
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in_L = 0.0f;
 	LADSPA_Data in_R = 0.0f;
@@ -379,14 +379,14 @@ run_Doubler(LADSPA_Handle Instance,
 		rem = fpos - n;
 
 		s_a_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n);
+				    ptr->pos_L, (int) n);
 		s_b_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n + 1);
+				    ptr->pos_L, (int) n + 1);
 
 		s_a_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n);
+				    ptr->pos_R, (int) n);
 		s_b_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n + 1);
+				    ptr->pos_R, (int) n + 1);
 
 		drystream_L = drylevel * in_L;
 		drystream_R = drylevel * in_R;
@@ -436,8 +436,8 @@ run_adding_Doubler(LADSPA_Handle Instance,
 	LADSPA_Data * output_L = ptr->output_L;
 	LADSPA_Data * output_R = ptr->output_R;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in_L = 0.0f;
 	LADSPA_Data in_R = 0.0f;
@@ -528,14 +528,14 @@ run_adding_Doubler(LADSPA_Handle Instance,
 		rem = fpos - n;
 
 		s_a_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n);
+				    ptr->pos_L, (int) n);
 		s_b_L = read_buffer(ptr->ring_L, ptr->buflen_L,
-				    ptr->pos_L, (unsigned long) n + 1);
+				    ptr->pos_L, (int) n + 1);
 
 		s_a_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n);
+				    ptr->pos_R, (int) n);
 		s_b_R = read_buffer(ptr->ring_R, ptr->buflen_R,
-				    ptr->pos_R, (unsigned long) n + 1);
+				    ptr->pos_R, (int) n + 1);
 
 		drystream_L = drylevel * in_L;
 		drystream_R = drylevel * in_R;
@@ -572,10 +572,10 @@ LADSPA_Descriptor * stereo_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -699,7 +699,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -715,9 +715,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(stereo_descriptor);
 }
 

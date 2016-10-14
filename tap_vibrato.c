@@ -72,11 +72,11 @@ typedef struct {
 	LADSPA_Data * output;
 
 	LADSPA_Data * ringbuffer;
-	unsigned long buflen;
-	unsigned long pos;
+	int buflen;
+	int pos;
 	LADSPA_Data phase;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Vibrato;
 
@@ -109,7 +109,7 @@ void
 activate_Vibrato(LADSPA_Handle Instance) {
 
 	Vibrato * ptr = (Vibrato *)Instance;
-	unsigned long i;
+	int i;
 
 	for (i = 0; i < 2 * PM_DEPTH; i++)
 		ptr->ringbuffer[i] = 0.0f;
@@ -172,8 +172,8 @@ run_Vibrato(LADSPA_Handle Instance,
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data phase = 0.0f;
@@ -196,12 +196,12 @@ run_Vibrato(LADSPA_Handle Instance,
 
 		push_buffer(in, ptr->ringbuffer, ptr->buflen, &(ptr->pos));
 
-		fpos = depth * (1.0f - cos_table[(unsigned long) phase]);
+		fpos = depth * (1.0f - cos_table[(int) phase]);
 		n = floorf(fpos);
 		rem = fpos - n;
 
-		s_a = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n);
-		s_b = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n + 1);
+		s_a = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n);
+		s_b = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n + 1);
 
 		*(output++) = wetlevel * ((1 - rem) * s_a + rem * s_b) +
 			drylevel * read_buffer(ptr->ringbuffer, ptr->buflen,
@@ -242,8 +242,8 @@ run_adding_Vibrato(LADSPA_Handle Instance,
 	LADSPA_Data * input = ptr->input;
 	LADSPA_Data * output = ptr->output;
 
-	unsigned long sample_index;
-	unsigned long sample_count = SampleCount;
+	int sample_index;
+	int sample_count = SampleCount;
 
 	LADSPA_Data in = 0.0f;
 	LADSPA_Data phase = 0.0f;
@@ -266,12 +266,12 @@ run_adding_Vibrato(LADSPA_Handle Instance,
 
 		push_buffer(in, ptr->ringbuffer, ptr->buflen, &(ptr->pos));
 
-		fpos = depth * (1.0f - cos_table[(unsigned long) phase]);
+		fpos = depth * (1.0f - cos_table[(int) phase]);
 		n = floorf(fpos);
 		rem = fpos - n;
 
-		s_a = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n);
-		s_b = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (unsigned long) n + 1);
+		s_a = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n);
+		s_b = read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos, (int) n + 1);
 
 		*(output++) += ptr->run_adding_gain * wetlevel * ((1 - rem) * s_a + rem * s_b) +
 			drylevel * read_buffer(ptr->ringbuffer, ptr->buflen,
@@ -303,10 +303,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	int i;
 	char ** port_names;
@@ -404,7 +404,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -420,9 +420,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 

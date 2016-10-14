@@ -54,10 +54,10 @@ typedef struct {
 	LADSPA_Data * output;
 
 	LADSPA_Data * ring;
-	unsigned long buflen;
-	unsigned long pos;
+	int buflen;
+	int pos;
 
-	unsigned long sample_rate;
+	int sample_rate;
 	LADSPA_Data run_adding_gain;
 } Pinknoise;
 
@@ -156,7 +156,7 @@ run_Pinknoise(LADSPA_Handle Instance,
 	LADSPA_Data hurst = LIMIT(*(ptr->hurst), 0.0f, 1.0f);
 	LADSPA_Data signal = db2lin(LIMIT(*(ptr->signal), -90.0f, 20.0f));
 	LADSPA_Data noise = db2lin(LIMIT(*(ptr->noise), -90.0f, 20.0f));
-	unsigned long sample_index;
+	int sample_index;
 	
   	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 
@@ -193,7 +193,7 @@ run_adding_Pinknoise(LADSPA_Handle Instance,
 	LADSPA_Data hurst = LIMIT(*(ptr->hurst), 0.0f, 1.0f);
 	LADSPA_Data signal = db2lin(LIMIT(*(ptr->signal), -90.0f, 20.0f));
 	LADSPA_Data noise = db2lin(LIMIT(*(ptr->noise), -90.0f, 20.0f));
-	unsigned long sample_index;
+	int sample_index;
 	
   	for (sample_index = 0; sample_index < SampleCount; sample_index++) {
 
@@ -223,10 +223,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -237,7 +237,7 @@ _init() {
 		exit(1);
 
 	/* initialize RNG */
-	srand(time(0));
+	//srand(time(0));
 
 	mono_descriptor->UniqueID = ID_MONO;
 	mono_descriptor->Label = strdup("tap_pinknoise");
@@ -307,7 +307,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -323,9 +323,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 

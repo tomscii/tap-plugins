@@ -62,7 +62,7 @@ typedef struct {
 	LADSPA_Data * input_R;
 	LADSPA_Data * output_L;
 	LADSPA_Data * output_R;
-	unsigned long SampleRate;
+	int SampleRate;
 	LADSPA_Data Phase;
 	LADSPA_Data run_adding_gain;
 } AutoPan;
@@ -145,7 +145,7 @@ run_AutoPan(LADSPA_Handle Instance,
 	LADSPA_Data freq = LIMIT(*(ptr->freq),0.0f,20.0f);
 	LADSPA_Data depth = LIMIT(*(ptr->depth),0.0f,100.0f);
 	LADSPA_Data gain = db2lin(LIMIT(*(ptr->gain),-70.0f,20.0f));
-	unsigned long sample_index;
+	int sample_index;
 	LADSPA_Data phase_L = 0;
 	LADSPA_Data phase_R = 0;
 	
@@ -158,9 +158,9 @@ run_AutoPan(LADSPA_Handle Instance,
 		        phase_R -= 1024.0f;  
 
 		*(output_L++) = *(input_L++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_L]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(int) phase_L]);
 		*(output_R++) = *(input_R++) * gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_R]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(int) phase_R]);
 	}
 	ptr->Phase = phase_L;
 	while (ptr->Phase >= 1024.0f)
@@ -194,7 +194,7 @@ run_adding_AutoPan(LADSPA_Handle Instance,
 	LADSPA_Data freq = LIMIT(*(ptr->freq),0.0f,20.0f);
 	LADSPA_Data depth = LIMIT(*(ptr->depth),0.0f,100.0f);
 	LADSPA_Data gain = db2lin(LIMIT(*(ptr->gain),-70.0f,20.0f));
-	unsigned long sample_index;
+	int sample_index;
 	LADSPA_Data phase_L = 0;
 	LADSPA_Data phase_R = 0;
 	
@@ -207,9 +207,9 @@ run_adding_AutoPan(LADSPA_Handle Instance,
 		        phase_R -= 1024.0f;  
 
 		*(output_L++) += *(input_L++) * gain * ptr->run_adding_gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_L]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(int) phase_L]);
 		*(output_R++) += *(input_R++) * gain * ptr->run_adding_gain *
-			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(unsigned long) phase_R]);
+			(1 - 0.5*depth/100 + 0.5 * depth/100 * cos_table[(int) phase_R]);
 	}
 	ptr->Phase = phase_L;
 	while (ptr->Phase >= 1024.0f)
@@ -231,10 +231,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	int i;
 	char ** port_names;
@@ -323,7 +323,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -339,9 +339,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 

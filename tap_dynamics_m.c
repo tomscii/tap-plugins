@@ -84,7 +84,7 @@ typedef int64_t rms_t;
 
 typedef struct {
 	rms_t        buffer[RMSSIZE];
-        unsigned int pos;
+        int pos;
         rms_t        sum;
 } rms_env;
 
@@ -98,7 +98,7 @@ typedef struct {
 } GRAPH_POINT;
 
 typedef struct {
-	unsigned long num_points;
+	int num_points;
 	GRAPH_POINT points[MAX_POINTS];
 } DYNAMICS_DATA;
 
@@ -117,10 +117,10 @@ typedef struct {
 	LADSPA_Data * mode;
 	LADSPA_Data * input;
 	LADSPA_Data * output;
-	unsigned long sample_rate;
+	int sample_rate;
 
 	float * as;
-	unsigned long count;
+	int count;
 	dyn_t amp;
 	dyn_t env;
 	float gain;
@@ -149,7 +149,7 @@ rms_env_new(void) {
 void
 rms_env_reset(rms_env *r) {
 
-        unsigned int i;
+        int i;
 
         for (i = 0; i < RMSSIZE; i++) {
                 r->buffer[i] = 0.0f;
@@ -211,7 +211,7 @@ instantiate_Dynamics(const LADSPA_Descriptor * Descriptor, unsigned long sample_
 	LADSPA_Handle * ptr;
 
 	float * as = NULL;
-	unsigned int count = 0;
+	int count = 0;
         dyn_t amp = 0.0f;
 	dyn_t env = 0.0f;
 	float gain = 0.0f;
@@ -306,19 +306,19 @@ run_Dynamics(LADSPA_Handle Instance,
         const float offsgain = LIMIT(*(ptr->offsgain), -20.0f, 20.0f);
         const float mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
 	const int mode = LIMIT(*(ptr->mode), 0, NUM_MODES-1);
-	unsigned long sample_index;
+	int sample_index;
 
         dyn_t amp = ptr->amp;
         dyn_t env = ptr->env;
         float * as = ptr->as;
-        unsigned int count = ptr->count;
+        int count = ptr->count;
         float gain = ptr->gain;
         float gain_out = ptr->gain_out;
         rms_env * rms = ptr->rms;
         rms_t sum = ptr->sum;
 
-        const float ga = as[(unsigned int)(attack * 0.001f * (float)(TABSIZE-1))];
-        const float gr = as[(unsigned int)(release * 0.001f * (float)(TABSIZE-1))];
+        const float ga = as[(int)(attack * 0.001f * (float)(TABSIZE-1))];
+        const float gr = as[(int)(release * 0.001f * (float)(TABSIZE-1))];
         const float ef_a = ga * 0.25f;
         const float ef_ai = 1.0f - ef_a;
 
@@ -412,19 +412,19 @@ run_adding_Dynamics(LADSPA_Handle Instance,
         const float offsgain = LIMIT(*(ptr->offsgain), -20.0f, 20.0f);
         const float mugain = db2lin(LIMIT(*(ptr->mugain), -20.0f, 20.0f));
 	const int mode = LIMIT(*(ptr->mode), 0, NUM_MODES-1);
-	unsigned long sample_index;
+	int sample_index;
 
         dyn_t amp = ptr->amp;
         dyn_t env = ptr->env;
         float * as = ptr->as;
-        unsigned int count = ptr->count;
+        int count = ptr->count;
         float gain = ptr->gain;
         float gain_out = ptr->gain_out;
         rms_env * rms = ptr->rms;
         rms_t sum = ptr->sum;
 
-        const float ga = as[(unsigned int)(attack * 0.001f * (float)(TABSIZE-1))];
-        const float gr = as[(unsigned int)(release * 0.001f * (float)(TABSIZE-1))];
+        const float ga = as[(int)(attack * 0.001f * (float)(TABSIZE-1))];
+        const float gr = as[(int)(release * 0.001f * (float)(TABSIZE-1))];
         const float ef_a = ga * 0.25f;
         const float ef_ai = 1.0f - ef_a;
 
@@ -514,10 +514,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -628,7 +628,7 @@ _init() {
 
 void
 delete_descriptor(LADSPA_Descriptor * descriptor) {
-	unsigned long index;
+	int index;
 	if (descriptor) {
 		free((char *)descriptor->Label);
 		free((char *)descriptor->Name);
@@ -644,9 +644,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 

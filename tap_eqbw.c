@@ -361,7 +361,7 @@ run_eq(LADSPA_Handle instance, unsigned long sample_count) {
 	biquad * filters = ptr->filters;
 	float fs = ptr->fs;
 
-	unsigned long pos;
+	int pos;
 	float samp;
 
 
@@ -501,7 +501,7 @@ run_adding_eq(LADSPA_Handle instance, unsigned long sample_count) {
 	biquad * filters = ptr->filters;
 	float fs = ptr->fs;
 
-	unsigned long pos;
+	int pos;
 	float samp;
 
 
@@ -596,7 +596,7 @@ run_adding_eq(LADSPA_Handle instance, unsigned long sample_count) {
 
 
 void
-_init() {
+__attribute__((constructor)) tap_init() {
 
 	char **port_names;
 	LADSPA_PortDescriptor *port_descriptors;
@@ -955,7 +955,7 @@ _init() {
 
 
 void 
-_fini() {
+__attribute__((destructor)) tap_fini() {
 
 	if (eqDescriptor) {
 		free((LADSPA_PortDescriptor *)eqDescriptor->PortDescriptors);
