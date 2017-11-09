@@ -1,6 +1,6 @@
 /*                                                     -*- linux-c -*-
     Copyright (C) 2004 Tom Szilagyi
-    
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -22,7 +22,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "ladspa.h"
+#include <ladspa.h>
 #include "tap_utils.h"
 
 
@@ -83,19 +83,22 @@ typedef struct {
 
 
 /* Construct a new plugin instance. */
-LADSPA_Handle 
+LADSPA_Handle
 instantiate_Vibrato(const LADSPA_Descriptor * Descriptor,
 		    unsigned long             sample_rate) {
-  
-        LADSPA_Handle * ptr;
-	
+
+	LADSPA_Handle * ptr;
+
 	if ((ptr = malloc(sizeof(Vibrato))) != NULL) {
 		((Vibrato *)ptr)->sample_rate = sample_rate;
 		((Vibrato *)ptr)->run_adding_gain = 1.0f;
 
-		if ((((Vibrato *)ptr)->ringbuffer = 
+		if ((((Vibrato *)ptr)->ringbuffer =
 		     calloc(2 * PM_DEPTH, sizeof(LADSPA_Data))) == NULL)
+		{
+			free(ptr);
 			return NULL;
+		}
 		((Vibrato *)ptr)->buflen = ceil(0.2f * sample_rate / M_PI);
 		((Vibrato *)ptr)->pos = 0;
 
@@ -303,10 +306,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	int i;
 	char ** port_names;
@@ -420,9 +423,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 

@@ -22,7 +22,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "ladspa.h"
+#include <ladspa.h>
 
 
 /* ***** VERY IMPORTANT! *****
@@ -70,7 +70,7 @@ load_plugin_data(LADSPA_Handle Instance) {
 
 	Reverb * ptr = (Reverb *)Instance;
 	unsigned long m;
-	int i;
+	unsigned int i;
 
 
 	m = LIMIT(*(ptr->mode),0,NUM_MODES-1);
@@ -191,7 +191,7 @@ void
 comp_coeffs(LADSPA_Handle Instance) {
 
 	Reverb * ptr = (Reverb *)Instance;
-	int i;
+	unsigned int i;
 	
 
 	if (*(ptr->mode) != ptr->old_mode)
@@ -412,7 +412,7 @@ run_Reverb(LADSPA_Handle Instance,
 	Reverb * ptr = (Reverb *)Instance;
 
 	unsigned long sample_index;
-	int i;
+	unsigned int i;
 
 	LADSPA_Data decay = LIMIT(*(ptr->decay),0.0f,10000.0f);
 	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-70.0f,10.0f));
@@ -531,7 +531,7 @@ run_adding_gain_Reverb(LADSPA_Handle Instance,
 	Reverb * ptr = (Reverb *)Instance;
 
 	unsigned long sample_index;
-	int i;
+	unsigned int i;
 
 	LADSPA_Data decay = LIMIT(*(ptr->decay),0.0f,10000.0f);
 	LADSPA_Data drylevel = db2lin(LIMIT(*(ptr->drylevel),-70.0f,10.0f));
@@ -663,10 +663,10 @@ LADSPA_Descriptor * stereo_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -813,9 +813,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(stereo_descriptor);
 }
 

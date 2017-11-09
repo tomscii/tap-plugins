@@ -23,7 +23,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "ladspa.h"
+#include <ladspa.h>
 #include "tap_utils.h"
 
 
@@ -202,7 +202,7 @@ get_table_gain(int mode, LADSPA_Data level) {
 	LADSPA_Data y1 = -80.0f;
 	LADSPA_Data x2 = 0.0f;
 	LADSPA_Data y2 = 0.0f;
-	int i = 0;
+	unsigned int i = 0;
 
 	if (level <= -80.0f)
 		return get_table_gain(mode, -79.9f);
@@ -694,10 +694,10 @@ LADSPA_Descriptor * stereo_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -855,9 +855,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(stereo_descriptor);
 }
 

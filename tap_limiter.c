@@ -22,7 +22,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "ladspa.h"
+#include <ladspa.h>
 #include "tap_utils.h"
 
 /* The Unique ID of the plugin: */
@@ -174,38 +174,18 @@ run_Limiter(LADSPA_Handle Instance,
 			if (read_buffer(ptr->ringbuffer, ptr->buflen,
 					ptr->pos, ptr->ready_num) >= 0.0f) {
 				index_offs = 0;
-				do {
+				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						    ptr->ready_num + index_offs) >= 0.0f) &&
+				       (ptr->ready_num + index_offs < run_length)) {
 					index_offs++;
-					if (ptr->ready_num + index_offs == run_length) {
-						/*
-						 * No more zero-crossing point in this chunk.
-						 * Fetch more samples unless we are at the last one.
-						 */
-						if (ptr->ready_num != 0) {
-							run_length = ptr->ready_num;
-							goto push;
-						}
-						break;
-					}
-				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						     ptr->ready_num + index_offs) >= 0.0f);
+				}
 			} else {
 				index_offs = 0;
-				do {
+				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						    ptr->ready_num + index_offs) <= 0.0f) &&
+				       (ptr->ready_num + index_offs < run_length)) {
 					index_offs++;
-					if (ptr->ready_num + index_offs == run_length) {
-						/*
-						 * No more zero-crossing point in this chunk.
-						 * Fetch more samples unless we are at the last one.
-						 */
-						if (ptr->ready_num != 0) {
-							run_length = ptr->ready_num;
-							goto push;
-						}
-						break;
-					}
-				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						     ptr->ready_num + index_offs) < 0.0f);
+				}
 			}
 			
 			/* search for max value in scanned halfcycle */
@@ -226,7 +206,6 @@ run_Limiter(LADSPA_Handle Instance,
 			ptr->ready_num += index_offs;			
 		}
 		
-	push:
 		/* push run_length values out of ringbuffer, feed with input */
 		for (sample_index = 0; sample_index < run_length; sample_index++) {
 			*(output++) = out_vol * 
@@ -281,38 +260,18 @@ run_adding_Limiter(LADSPA_Handle Instance,
 			if (read_buffer(ptr->ringbuffer, ptr->buflen,
 					ptr->pos, ptr->ready_num) >= 0.0f) {
 				index_offs = 0;
-				do {
+				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						    ptr->ready_num + index_offs) >= 0.0f) &&
+				       (ptr->ready_num + index_offs < run_length)) {
 					index_offs++;
-					if (ptr->ready_num + index_offs == run_length) {
-						/*
-						 * No more zero-crossing point in this chunk.
-						 * Fetch more samples unless we are at the last one.
-						 */
-						if (ptr->ready_num != 0) {
-							run_length = ptr->ready_num;
-							goto push;
-						}
-						break;
-					}
-				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						     ptr->ready_num + index_offs) >= 0.0f);
+				}
 			} else {
 				index_offs = 0;
-				do {
+				while ((read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
+						    ptr->ready_num + index_offs) <= 0.0f) &&
+				       (ptr->ready_num + index_offs < run_length)) {
 					index_offs++;
-					if (ptr->ready_num + index_offs == run_length) {
-						/*
-						 * No more zero-crossing point in this chunk.
-						 * Fetch more samples unless we are at the last one.
-						 */
-						if (ptr->ready_num != 0) {
-							run_length = ptr->ready_num;
-							goto push;
-						}
-						break;
-					}
-				} while (read_buffer(ptr->ringbuffer, ptr->buflen, ptr->pos,
-						     ptr->ready_num + index_offs) < 0.0f);
+				}
 			}
 			
 			/* search for max value in scanned halfcycle */
@@ -333,7 +292,6 @@ run_adding_Limiter(LADSPA_Handle Instance,
 			ptr->ready_num += index_offs;			
 		}
 		
-	push:
 		/* push run_length values out of ringbuffer, feed with input */
 		for (sample_index = 0; sample_index < run_length; sample_index++) {
 			*(output++) += ptr->run_adding_gain * out_vol * 
@@ -364,10 +322,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -463,9 +421,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 
