@@ -236,6 +236,11 @@ __attribute__((constructor)) tap_init() {
 	     (LADSPA_Descriptor *)malloc(sizeof(LADSPA_Descriptor))) == NULL)
 		exit(1);
 
+#ifndef TAP_DISABLE_SRAND
+	/* initialize RNG */
+	srand(time(0));
+#endif
+
 	mono_descriptor->UniqueID = ID_MONO;
 	mono_descriptor->Label = strdup("tap_pinknoise");
 	mono_descriptor->Properties = LADSPA_PROPERTY_HARD_RT_CAPABLE;
