@@ -27,7 +27,7 @@ bugs or malfunction. */
 #include <string.h>
 #include <math.h>
 
-#include "ladspa.h"
+#include <ladspa.h>
 #include "tap_utils.h"
 
 /* The Unique ID of the plugin */
@@ -143,9 +143,8 @@ activate_eq(LADSPA_Handle instance) {
 static
 void
 cleanup_eq(LADSPA_Handle instance) {
-
-        eq *plugin_data = (eq *)instance;
-        free(plugin_data->filters);
+	eq *plugin_data = (eq *)instance;
+	free(plugin_data->filters);
 	free(instance);
 }
 
@@ -494,7 +493,7 @@ run_adding_eq(LADSPA_Handle instance, unsigned long sample_count) {
 
 
 void
-_init() {
+__attribute__((constructor)) tap_init() {
 
 	char **port_names;
 	LADSPA_PortDescriptor *port_descriptors;
@@ -765,7 +764,7 @@ _init() {
 
 
 void 
-_fini() {
+__attribute__((destructor)) tap_fini() {
 
 	if (eqDescriptor) {
 		free((LADSPA_PortDescriptor *)eqDescriptor->PortDescriptors);

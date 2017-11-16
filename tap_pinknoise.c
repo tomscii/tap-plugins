@@ -23,7 +23,7 @@
 #include <math.h>
 #include <time.h>
 
-#include "ladspa.h"
+#include <ladspa.h>
 #include "tap_utils.h"
 
 /* The Unique ID of the plugin: */
@@ -223,10 +223,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* _init() is called automatically when the plugin library is first
+/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-_init() {
+__attribute__((constructor)) tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -236,8 +236,10 @@ _init() {
 	     (LADSPA_Descriptor *)malloc(sizeof(LADSPA_Descriptor))) == NULL)
 		exit(1);
 
+#ifndef TAP_DISABLE_SRAND
 	/* initialize RNG */
 	srand(time(0));
+#endif
 
 	mono_descriptor->UniqueID = ID_MONO;
 	mono_descriptor->Label = strdup("tap_pinknoise");
@@ -323,9 +325,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* _fini() is called automatically when the library is unloaded. */
+/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-_fini() {
+__attribute__((destructor)) tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 
