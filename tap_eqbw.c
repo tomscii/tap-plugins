@@ -26,6 +26,7 @@
 #include <math.h>
 
 #include <ladspa.h>
+#include "tap_platform.h"
 #include "tap_utils.h"
 
 /* The Unique ID of the plugin */
@@ -595,7 +596,7 @@ run_adding_eq(LADSPA_Handle instance, unsigned long sample_count) {
 
 
 void
-__attribute__((constructor)) tap_init() {
+__CONSTRUCTOR tap_init() {
 
 	char **port_names;
 	LADSPA_PortDescriptor *port_descriptors;
@@ -954,7 +955,7 @@ __attribute__((constructor)) tap_init() {
 
 
 void 
-__attribute__((destructor)) tap_fini() {
+__DESTRUCTOR tap_fini() {
 
 	if (eqDescriptor) {
 		free((LADSPA_PortDescriptor *)eqDescriptor->PortDescriptors);
@@ -964,3 +965,5 @@ __attribute__((destructor)) tap_fini() {
 	}
 	
 }
+
+__INIT_FINI(tap_init, tap_fini);

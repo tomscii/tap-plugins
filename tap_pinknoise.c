@@ -16,7 +16,6 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +23,7 @@
 #include <time.h>
 
 #include <ladspa.h>
+#include "tap_platform.h"
 #include "tap_utils.h"
 
 /* The Unique ID of the plugin: */
@@ -223,10 +223,10 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
+/* tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
-__attribute__((constructor)) tap_init() {
+__CONSTRUCTOR tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -325,9 +325,9 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
+/* tap_fini() is called automatically when the library is unloaded. */
 void
-__attribute__((destructor)) tap_fini() {
+__DESTRUCTOR tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 
@@ -343,3 +343,5 @@ ladspa_descriptor(unsigned long Index) {
 		return NULL;
 	}
 }
+
+__INIT_FINI(tap_init, tap_fini)
