@@ -20,12 +20,7 @@
 #endif
 
 #include <stdint.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-
-
+#include <math.h>
 
 /* push a sample into a ringbuffer and return the sample falling out */
 static inline

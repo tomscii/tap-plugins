@@ -493,7 +493,10 @@ run_adding_eq(LADSPA_Handle instance, unsigned long sample_count) {
 
 
 void
-__attribute__((constructor)) tap_init() {
+#ifndef _MSC_VER
+__attribute__((constructor))
+#endif
+tap_init() {
 
 	char **port_names;
 	LADSPA_PortDescriptor *port_descriptors;
@@ -764,7 +767,10 @@ __attribute__((constructor)) tap_init() {
 
 
 void 
-__attribute__((destructor)) tap_fini() {
+#ifndef _MSC_VER
+__attribute__((destructor))
+#endif
+tap_fini() {
 
 	if (eqDescriptor) {
 		free((LADSPA_PortDescriptor *)eqDescriptor->PortDescriptors);
@@ -774,3 +780,21 @@ __attribute__((destructor)) tap_fini() {
 	}
 	
 }
+#ifdef _MSC_VER
+#include <windows.h>
+BOOL APIENTRY DllMain(HMODULE hModule,
+	DWORD  ul_reason_for_call,
+	LPVOID lpReserved)
+{
+	switch (ul_reason_for_call)
+	{
+	case DLL_PROCESS_ATTACH:
+		tap_init();
+		break;
+	case DLL_PROCESS_DETACH:
+		tap_fini();
+		break;
+	}
+	return TRUE;
+}
+#endif

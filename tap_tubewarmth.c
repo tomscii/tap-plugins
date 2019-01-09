@@ -15,7 +15,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
-
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -381,8 +383,11 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 /* __attribute__((constructor)) tap_init() is called automatically when the plugin library is first
    loaded. */
-void 
-__attribute__((constructor)) tap_init() {
+void
+#ifndef _MSC_VER
+__attribute__((constructor))
+#endif
+tap_init() {
 	
 	char ** port_names;
 	LADSPA_PortDescriptor * port_descriptors;
@@ -471,7 +476,10 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 
 /* __attribute__((destructor)) tap_fini() is called automatically when the library is unloaded. */
 void
-__attribute__((destructor)) tap_fini() {
+#ifndef _MSC_VER
+__attribute__((destructor))
+#endif
+tap_fini() {
 	delete_descriptor(mono_descriptor);
 }
 
@@ -487,3 +495,20 @@ ladspa_descriptor(unsigned long Index) {
 		return NULL;
 	}
 }
+#ifdef _MSC_VER
+BOOL APIENTRY DllMain(HMODULE hModule,
+	DWORD  ul_reason_for_call,
+	LPVOID lpReserved)
+{
+	switch (ul_reason_for_call)
+	{
+	case DLL_PROCESS_ATTACH:
+		tap_init();
+		break;
+	case DLL_PROCESS_DETACH:
+		tap_fini();
+		break;
+	}
+	return TRUE;
+}
+#endif
