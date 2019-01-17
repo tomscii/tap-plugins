@@ -19,6 +19,7 @@
 #define _ISOC99_SOURCE
 #endif
 
+#include <math.h>
 #include <stdint.h>
 
 
@@ -60,12 +61,6 @@
 
 /* compensation ratio of freq_resp in fb_gain calc */
 #define FR_R_COMP         0.75f
-
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-
 
 /* push a sample into a ringbuffer and return the sample falling out */
 static inline

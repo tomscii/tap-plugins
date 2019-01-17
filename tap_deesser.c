@@ -15,14 +15,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
 #include <ladspa.h>
+#include "tap_platform.h"
 #include "tap_utils.h"
-#include "platform.h"
 
 
 #ifndef INFINITY
@@ -93,11 +94,11 @@ LADSPA_Data fast_lin2db(LADSPA_Data lin) {
         int exp = 0;
         LADSPA_Data mant = ABS(lin);
 
-	/* sanity checks */
-	if (mant == 0.0f)
-		return(-INFINITY); /* -inf */
-	if (mant == INFINITY) /* +inf */
-		return(mant);
+    /* sanity checks */
+    if (mant == 0.0f)
+        return(-INFINITY);
+    if (mant == INFINITY)
+        return(mant);
 
         while (mant < 1.0f) {
                 mant *= 10;
@@ -351,7 +352,7 @@ LADSPA_Descriptor * mono_descriptor = NULL;
 
 
 
-/* __CONSTRUCTOR tap_init() is called automatically when the plugin library is first
+/* tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
 __CONSTRUCTOR tap_init() {
@@ -473,7 +474,7 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* __DESTRUCTOR tap_fini() is called automatically when the library is unloaded. */
+/* tap_fini() is called automatically when the library is unloaded. */
 void
 __DESTRUCTOR tap_fini() {
 	delete_descriptor(mono_descriptor);

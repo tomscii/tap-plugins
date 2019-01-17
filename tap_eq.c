@@ -28,8 +28,8 @@ bugs or malfunction. */
 #include <math.h>
 
 #include <ladspa.h>
+#include "tap_platform.h"
 #include "tap_utils.h"
-#include "platform.h"
 
 /* The Unique ID of the plugin */
 #define ID_MONO        2141

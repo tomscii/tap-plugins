@@ -23,7 +23,7 @@
 #include <math.h>
 
 #include <ladspa.h>
-#include "platform.h"
+#include "tap_platform.h"
 
 
 /* ***** VERY IMPORTANT! *****
@@ -664,7 +664,7 @@ LADSPA_Descriptor * stereo_descriptor = NULL;
 
 
 
-/* __CONSTRUCTOR tap_init() is called automatically when the plugin library is first
+/* tap_init() is called automatically when the plugin library is first
    loaded. */
 void 
 __CONSTRUCTOR tap_init() {
@@ -814,7 +814,7 @@ delete_descriptor(LADSPA_Descriptor * descriptor) {
 }
 
 
-/* __DESTRUCTOR tap_fini() is called automatically when the library is unloaded. */
+/* tap_fini() is called automatically when the library is unloaded. */
 void
 __DESTRUCTOR tap_fini() {
 	delete_descriptor(stereo_descriptor);
