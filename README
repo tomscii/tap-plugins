@@ -9,7 +9,8 @@ Welcome!
 
 TAP-plugins is a bunch of LADSPA plugins for audio processing. It runs
 on the GNU/Linux operating system, and possibly other UNIX-like
-operating systems.
+operating systems. (Although the author cannot verify the results,
+the source code can be compiled on Mac OS X and MS Windows as well.)
 
 LADSPA stands for Linux Audio Developers Simple Plugin API.
 Learn more about LADSPA at http://www.ladspa.org
