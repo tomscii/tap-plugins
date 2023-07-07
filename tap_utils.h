@@ -20,6 +20,11 @@
 #endif
 
 #include <stdint.h>
+
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif
+
 #include <math.h>
 
 /* push a sample into a ringbuffer and return the sample falling out */
